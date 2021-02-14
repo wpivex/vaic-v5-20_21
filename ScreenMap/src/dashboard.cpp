@@ -19,22 +19,6 @@ const color darkgreen = vex::color(0x008000);
 
 const int PX_PER_FT = 20; // 240px for 12ft
 
-// Draws everything which does not need to be redrawn
-static void initialDraw() {
-  Brain.Screen.setFont(mono15);
-
-  // Draw stats screen to the right of the map
-  Brain.Screen.setPenColor(yellow);
-  Brain.Screen.drawRectangle(240, 0, 240, 240, black);
-
-  Brain.Screen.drawRectangle(240, 0, 240, 20, grey);
-  Brain.Screen.setFillColor(grey);
-  Brain.Screen.printAt(250, 15, "Stats");
-
-  Brain.Screen.setFillColor(black);
-  Brain.Screen.printAt(250, 155, "Local Location:");
-}
-
 // Draws the static objects on the field, the grey background and the nine goals.
 static void drawFieldBackground() {
   // Draw Field Carpet
@@ -72,6 +56,17 @@ static void drawFromJetson() {
     last_packets = jetson_comms.get_packets();
   }
 
+  // Draw Stats screen background
+  Brain.Screen.setPenColor(yellow);
+  Brain.Screen.drawRectangle(240, 0, 240, 240, black);
+
+  Brain.Screen.drawRectangle(240, 0, 240, 20, grey);
+  Brain.Screen.setFillColor(grey);
+  Brain.Screen.printAt(250, 15, "Stats");
+
+  Brain.Screen.setFillColor(black);
+  Brain.Screen.printAt(250, 155, "Local Location:");
+
   // Color = status: red = no packets, green = packets
   Brain.Screen.setPenColor(total_packets == 0 ? red : green); 
   Brain.Screen.printAt(250, 35, true, "Jetson%s:", total_packets == 0 ? "(Disconnected)" : "(Connected)");
@@ -87,7 +82,7 @@ static void drawFromJetson() {
 
   Brain.Screen.printAt(xText, yText += 90, "x(ft): %.2f  y(ft): %.2f", (posData.x / -25.4) / 12, (posData.y / -25.4) / 12);
   // TODO fix below based on field data and az conventions
-  Brain.Screen.printAt(xText, yText += 15, "heading(deg): %.2f", posData.az / (2 * M_PI) * 360);
+  Brain.Screen.printAt(xText, yText += 15, "heading(deg): %.2f", posData.az / (2 * M_PI) * 360 + 180);
 
   // Draw map w/ balls and local robot
   for(int i = 0; i < local_map.mapnum; i++) {
@@ -104,6 +99,8 @@ static void drawFromJetson() {
     // TODO do something with height?
   }
 
+  Brain.Screen.setFillColor(black);
+
   // Draw a rectangle for robot and line from the center for heading
   // TODO draw rotated rectangle to display orientation instead of a line
   Brain.Screen.setPenColor(black);
@@ -112,8 +109,8 @@ static void drawFromJetson() {
   int yRobot = (int) ((posData.y / -25.4) / 12 * PX_PER_FT + 119);
   Brain.Screen.drawRectangle(xRobot - 20, yRobot - 20, 40, 40, green); // 24in robot
   // TODO fix below based on field data and az conventions
-  Brain.Screen.drawLine(xRobot, yRobot, xRobot + (int) (40 * sin(posData.az)), yRobot - (int) (40 * cos(posData.az)));
-} // drawFromJetson()
+  Brain.Screen.drawLine(xRobot, yRobot, xRobot + (int) (40 * sin(posData.az + M_PI)), yRobot - (int) (40 * cos(posData.az + M_PI)));
+} // drawFromJetson() 
 
 // Draws everything from Vex Link:
 // Map and stats for other alliance robot as well as general Vex Link data
@@ -147,7 +144,7 @@ static void drawFromVexLink() {
 
     Brain.Screen.printAt(xText - 10, yText, "Remote Location:");
     Brain.Screen.printAt(xText, yText += 15, "x(ft): %.2f  y(ft): %.2f", x, y);
-    Brain.Screen.printAt(xText, yText += 15, "heading(deg): %.2f", heading * 360 / (2 * M_PI));
+    Brain.Screen.printAt(xText, yText += 15, "heading(deg): %.2f", heading * 360 / (2 * M_PI) + 180);
 
     // Draw a rectangle for robot and line from the center for heading
     // TODO draw rotated rectangle to display orientation instead of a line
@@ -158,7 +155,7 @@ static void drawFromVexLink() {
     int yRobot = (int) (y * PX_PER_FT + 119);
     Brain.Screen.drawRectangle(xRobot - 13, yRobot - 13, 26, 26, cyan); // 15in robot
     // TODO fix below based on field data and az conventions
-    Brain.Screen.drawLine(xRobot, yRobot, xRobot + (int) (40 * sin(heading)), yRobot - (int) (40 * cos(heading)));
+    Brain.Screen.drawLine(xRobot, yRobot, xRobot + (int) (40 * sin(heading + M_PI)), yRobot - (int) (40 * cos(heading + M_PI)));
   } else {
     Brain.Screen.setPenColor(red);
     Brain.Screen.printAt(250, 95, "Vex Link(Disconnected):");
@@ -175,13 +172,13 @@ static void drawFromVexLink() {
 
 // Task to update screen with status
 int dashboardTask() {
-  initialDraw();
+  Brain.Screen.setFont(mono15);
   
   while(true) {
     drawFieldBackground();
     drawFromJetson();
     drawFromVexLink();
-    Brain.Screen.render();
+    Brain.Screen.render(); 
 
     this_thread::sleep_for(16);
   }
