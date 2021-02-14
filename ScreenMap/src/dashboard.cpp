@@ -12,83 +12,78 @@
 
 using namespace vex;
 
-color grey = vex::color(0x404040);
-color darkred = vex::color(0x800000);
-color darkgrn = vex::color(0x008000);
+const color GREY = vex::color(0x404040);
+const color DARK_RED = vex::color(0x800000);
+const color DARK_GREEN = vex::color(0x008000);
+
+const int PX_PER_FT = 20; // 240px for 12ft
 
 // Draws the static objects on the field, the grey background and the nine goals.
 static void drawBackground() {
   // Draw Field Carpet
   Brain.Screen.setPenColor(black);
-  Brain.Screen.setFillColor(grey);
+  Brain.Screen.setFillColor(GREY);
   Brain.Screen.drawRectangle(0, 0, 240, 240);
 
   // Draw 9 goals
-  for (int xGoal = 0; xGoal < 3; xGoal++) {
-    for (int yGoal = 0; yGoal < 3; yGoal++) {
+  for (int xGoal = 0; xGoal < 3; xGoal++) { // lower numbers are to the left
+    for (int yGoal = 0; yGoal < 3; yGoal++) { // lower numbers are towards the top
       int xCenter = xGoal * 120 + (1 - xGoal) * 8;
       int yCenter = yGoal * 120 + (1 - yGoal) * 8;
 
       Brain.Screen.setFillColor(black);
       Brain.Screen.drawCircle(xCenter, yCenter, 8);
-      Brain.Screen.setFillColor(grey);
+      Brain.Screen.setFillColor(GREY);
       Brain.Screen.drawCircle(xCenter, yCenter, 6);
     }
   }
+
+  // Draw stats screen to the right of the map
+  // Brain.Screen.setPenColor(yellow);
+  // Brain.Screen.setFillColor(black);
+  // Brain.Screen.drawRectangle(int x, int y, int width, int height);
 }
 
 // Draws all balls and data statistics found from the Jetson
-// static void drawBallsAndStats() {
-//   static MAP_RECORD local_map;
+static void drawBallsAndStats() {
+  static MAP_RECORD local_map;
 
-//   static int32_t last_data = 0;
-//   static int32_t last_packets = 0;
-//   static int32_t total_data = 0;
-//   static int32_t total_packets = 0;
-//   static uint32_t update_time = 0;
+  static int32_t last_packets = 0;
+  static int32_t total_packets = 0;
+  static uint32_t update_time = 0;
+
+  jetson_comms.get_data(&local_map);
   
-//   Brain.Screen.printAt( ox + 10, oy += 15, "Errors    %d", jetson_comms.get_errors() );
-//   Brain.Screen.printAt( ox + 10, oy += 15, "Timeouts  %d", jetson_comms.get_timeouts() );
-//   Brain.Screen.printAt( ox + 10, oy += 15, "pkts/sec  %d             ", total_packets );
-//   Brain.Screen.printAt( ox + 10, oy += 15, "boxnum    %d", local_map.boxnum );
-//   Brain.Screen.printAt( ox + 10, oy += 15, "mapnum    %d", local_map.mapnum );
+  // Brain.Screen.printAt(ox + 10, oy += 15, "Errors    %d", jetson_comms.get_errors());
+  // Brain.Screen.printAt(ox + 10, oy += 15, "Timeouts  %d", jetson_comms.get_timeouts());
+  // Brain.Screen.printAt(ox + 10, oy += 15, "pkts/sec  %d", total_packets);
+  // Brain.Screen.printAt(ox + 10, oy += 15, "boxnum    %d", local_map.boxnum);
+  // Brain.Screen.printAt(ox + 10, oy += 15, "mapnum    %d", local_map.mapnum);
 
-//   // once per second, update data rate stats
-//   if( Brain.Timer.system() > update_time ) {
-//     update_time = Brain.Timer.system() + 1000;
-//     total_data = jetson_comms.get_total() - last_data;
-//     total_packets = jetson_comms.get_packets() - last_packets;
-//     last_data = jetson_comms.get_total();
-//     last_packets = jetson_comms.get_packets();
-//   }
+  // once per second, update data rate stats
+  if(Brain.Timer.system() > update_time) {
+    update_time = Brain.Timer.system() + 1000;
+    total_packets = jetson_comms.get_packets() - last_packets;
+    last_packets = jetson_comms.get_packets();
+  }
 
-//   for( int i = 0; i < 4; i++ ) {
-//     if( i < local_map.boxnum ) {
-//       Brain.Screen.printAt( ox + 10, oy += 12, "box %d: c:%d x:%d y:%d w:%d h:%d prob:%.1f", i,
-//           (local_map.boxobj[i].classID), //Class ID (0 = Red 1 = Blue 2 = Goal)
-//           (local_map.boxobj[i].x), //in pixels
-//           (local_map.boxobj[i].y), //in pixels
-//           (local_map.boxobj[i].width), //in pixels
-//           (local_map.boxobj[i].height), //in pixels
-//           (local_map.boxobj[i].prob)); //percent likely to be in this catagory
-//     } else {
-//       Brain.Screen.printAt( ox + 10, oy += 12, "---");
-//     }
-//   }
+  // Print Ball stats on the right
 
-//   for( int i = 0; i < 4; i++ ) {
-//     if( i < local_map.mapnum ) {
-//       Brain.Screen.printAt( ox + 10, oy += 12, "map %d: a:%4d c:%4d X:%.2f Y:%.2f Z:%.1f",i,
-//           local_map.mapobj[i].age,
-//           local_map.mapobj[i].classID,
-//           (local_map.mapobj[i].positionX / -25.4),  // mm -> inches
-//           (local_map.mapobj[i].positionY / -25.4),  // mm -> inches
-//           (local_map.mapobj[i].positionZ / 25.4)); // mm -> inches
-//     } else {
-//       Brain.Screen.printAt( ox + 10, oy += 12, "---");
-//     }
-//   }
-// }
+  // Print Ball colors/locations on map
+  for(int i = 0; i < local_map.mapnum; i++) {
+    // positionX and positionY have 0,0 in the middle of the field w/ +x right and +y down
+    int xCenter = (int) ((local_map.mapobj[i].positionX / -25.4) / 12 * PX_PER_FT + 119); // mm -> px
+    int yCenter = (int) ((local_map.mapobj[i].positionY / -25.4) / 12 * PX_PER_FT + 119); // mm -> px
+
+    color ballColor = local_map.mapobj[i].classID == 0 ? red : blue; // class ID 0 = red and 1 = blue
+    Brain.Screen.setPenColor(ballColor); 
+    Brain.Screen.setFillColor(ballColor);
+    Brain.Screen.drawCircle(xCenter, yCenter, 5);
+
+    // do something with age?
+    // do something with height?
+  }
+}
 
 // Display various useful information about the Jetson
 static void dashboardJetson( int ox, int oy, int width, int height ) {
@@ -104,10 +99,10 @@ static void dashboardJetson( int ox, int oy, int width, int height ) {
   // border and titlebar
   Brain.Screen.setPenColor( yellow );
   Brain.Screen.drawRectangle(ox, oy, width, height, black );
-  Brain.Screen.drawRectangle( ox, oy, width, 20, grey );
+  Brain.Screen.drawRectangle( ox, oy, width, 20, GREY );
 
   Brain.Screen.setPenColor( yellow );
-  Brain.Screen.setFillColor( grey );
+  Brain.Screen.setFillColor( GREY );
   Brain.Screen.printAt(ox + 10, oy + 15, "Jetson" );
   oy += 20;
   
@@ -182,14 +177,14 @@ static void dashboardVexlink( int ox, int oy, int width, int height ) {
 
   // Link status in titlebar
   if( link.isLinked() ) {
-    Brain.Screen.setPenColor(darkgrn);
-    Brain.Screen.setFillColor(darkgrn);
+    Brain.Screen.setPenColor(DARK_GREEN);
+    Brain.Screen.setFillColor(DARK_GREEN);
     Brain.Screen.drawRectangle( ox+1, oy+1, width-2, 18 );
     Brain.Screen.setPenColor(yellow);
     Brain.Screen.printAt( ox + 10, oy + 15, "VEXlink: Good" );
   } else {
-    Brain.Screen.setPenColor(darkred);
-    Brain.Screen.setFillColor(darkred);
+    Brain.Screen.setPenColor(DARK_RED);
+    Brain.Screen.setFillColor(DARK_RED);
     Brain.Screen.drawRectangle( ox+1, oy+1, width-2, 18 );
     Brain.Screen.setPenColor(yellow);
     Brain.Screen.printAt(ox + 10, oy + 15, "VEXlink: Disconnected" );
@@ -236,16 +231,17 @@ static void dashboardVexlink( int ox, int oy, int width, int height ) {
 
 // Task to update screen with status
 int dashboardTask() {
-  // drawBackground();
+  drawBackground();
+  drawBallsAndStats();
 
-  while(true) {
-    // status
-    dashboardJetson( 0, 0, 280, 240 );
-    dashboardVexlink( 279, 0, 201, 240 );
-    // draw, at 30Hz
-    Brain.Screen.render();
-    this_thread::sleep_for(16);
-  }
+  // while(true) {
+  //   // status
+  //   dashboardJetson( 0, 0, 280, 240 );
+  //   dashboardVexlink( 279, 0, 201, 240 );
+  //   // draw, at 30Hz
+  //   Brain.Screen.render();
+  //   this_thread::sleep_for(16);
+  // }
 
   return 0;
 }
