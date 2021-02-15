@@ -15,7 +15,7 @@ Drive::Drive() {
 
 
 void Drive::turnDegrees(double angle){
-  double IN_PER_90 = 5.25;//What value the encoder reads for a 90 degree turn
+  double IN_PER_90 = 10.3;//What value the encoder reads for a 90 degree turn
 
   double targetL = leftInches()-IN_PER_90*angle/90.0;
   double targetR = rightInches()+IN_PER_90*angle/90.0;
@@ -37,7 +37,7 @@ void Drive::turnDegrees(double angle){
     LeftDriveSmart.spin(directionType::rev, driveValue, percentUnits::pct);
     RightDriveSmart.spin(directionType::fwd, driveValue, percentUnits::pct);
 
-  }while(std::abs(error)>.1 || velocityLeft()>2 || velocityRight()>2);
+  }while(std::abs(error)>.05 || velocityLeft()>2 || velocityRight()>2);
 
   LeftDriveSmart.stop();
   RightDriveSmart.stop();
@@ -65,6 +65,10 @@ void Drive::driveDistance(double inches){
 
     LeftDriveSmart.spin(directionType::fwd, driveValue, percentUnits::pct);
     RightDriveSmart.spin(directionType::fwd, driveValue, percentUnits::pct);
+
+
+    leftIntake.spin(directionType::fwd,100,percentUnits::pct);
+    rightIntake.spin(directionType::fwd,100,percentUnits::pct);
 
   }while(std::abs(error)>.5 || velocityLeft()>2 || velocityRight()>2);
 

@@ -119,15 +119,20 @@ int main() {
     drive->turnDegrees(45);
     leftIntake.spin(directionType::fwd,100,percentUnits::pct);
     rightIntake.spin(directionType::fwd,100,percentUnits::pct);
+    rollerBack.spin(directionType::fwd,100,percentUnits::pct);
     drive->driveDistance(24);
 
     while(1) {
+      leftIntake.spin(directionType::fwd,100,percentUnits::pct);
+      rightIntake.spin(directionType::fwd,100,percentUnits::pct);
         Brain.Screen.clearScreen();
         Brain.Screen.setCursor(2, 1);
         Brain.Screen.print("Left Encoder:");
         Brain.Screen.print(leftInches());
         Brain.Screen.print(" Right Encoder:");
         Brain.Screen.print(rightInches());
+
+        yeet.spin(directionType::fwd,100,percentUnits::pct);
 
         this_thread::sleep_for(100);
     }
