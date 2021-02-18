@@ -50,18 +50,18 @@ void Map::setBallCoords(BallCoord* coords, int numCoords) {
     if (i < numCoords)
       balls[i] = coords[i];
     else 
-      balls[i] = {};
+      balls[i] = {-1, -1, -1, -1};
   }
 
   numBalls = numCoords;
 }
 
 void Map::setRobotCoords(RobotCoord* coords, int numCoords) {
-  manager = {};
-  worker = {};
+  manager = {-1, -1, -1, -1, -1};
+  worker = {-1, -1, -1, -1, -1};
   
   for (int i = 0; i < MAX_ENEMIES; i++)
-    enemies[i] = {};
+    enemies[i] = {-1, -1, -1, -1, -1};
   numEnemies = 0;
 
   for (int i = 0; i < numCoords; i++) {

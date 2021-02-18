@@ -11,6 +11,7 @@
 #define MAP_H_
 
 typedef struct {
+  int32_t age; // number of frames since this ball was last mapped
   int colorID; // 0 = red, 1 = blue
   float x; // in above center of field (0,0)
   float y; // in right of center of field (0,0)
