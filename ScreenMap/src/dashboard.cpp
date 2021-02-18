@@ -12,6 +12,9 @@
 #include "vex.h"
 #include "map.h"
 
+#include<string>
+#include<sstream>
+
 using namespace vex;
 
 const color grey = vex::color(0x404040);
@@ -192,6 +195,7 @@ void updateMapObj(Map map) {
 
   // get manager robot data from mapRecord and worker data from vex link coords
   RobotCoord robots[2];
+  int numRobots = 1;
 
   robots[0] = {
     0, // manager
@@ -212,15 +216,17 @@ void updateMapObj(Map map) {
       (float) (workerHeading * 360 / (2 * M_PI) + 90), // hopefully starts at +x and increases counterclockwise, need to test on field
       15 // 15 in
     };
+
+    numRobots++;
   }
 
-  map.setRobotCoords(robots, 2);
+  map.setRobotCoords(robots, numRobots);
 } // updateMapObj(Map)
 
 void drawFromMap(Map map) {
   drawFieldBackground();
   drawJetsonStats();
-  
+
   drawManagerAndBalls(map);
   drawWorker(map);
 

@@ -301,18 +301,18 @@ jetson::request_map() {
       // serial1 is the second USB cdc channel dedicated to user programs
       // we use this rather than stdout so linefeed is not expanded
       //
-      FILE *fp = fopen("/dev/serial1", "w");
+      // FILE *fp = fopen("/dev/serial1", "w");
 
-      // This is arbitary message at the moment
-      // just using ASCII for convienience and debug porposes
-      //
-      static char msg[] = "AA55CC3301\r\n"; 
+      // // This is arbitary message at the moment
+      // // just using ASCII for convienience and debug porposes
+      // //
+      // static char msg[] = "AA55CC3301\r\n"; 
 
-      // send
-      fwrite( msg, 1, strlen(msg), fp );
+      // // send
+      // fwrite( msg, 1, strlen(msg), fp );
 
-      // close, flush buffers
-      fclose(fp);
+      // // close, flush buffers
+      // fclose(fp);
     }
 }
 

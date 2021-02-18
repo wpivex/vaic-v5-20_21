@@ -12,13 +12,13 @@
 
 typedef struct {
   int32_t age; // number of frames since this ball was last mapped
-  int colorID; // 0 = red, 1 = blue
+  int colorID; // 0 = red, 1 = blue, -1 = invalid
   float x; // in above center of field (0,0)
   float y; // in right of center of field (0,0)
 } BallCoord;
 
 typedef struct {
-  int robotID; // 0 = manager, 1 = worker, 2 = enemy
+  int robotID; // 0 = manager, 1 = worker, 2 = enemy, -1 = invalid
   float x; // in above center of field (0,0)
   float y; // in right of center of field (0,0)
   float deg; // heading in degrees, counterclockwise from +x
