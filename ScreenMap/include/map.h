@@ -12,16 +12,16 @@
 
 typedef struct {
   int colorID; // 0 = red, 1 = blue
-  float x; // in from top left
-  float y; // in from top right
+  float x; // in above center of field (0,0)
+  float y; // in right of center of field (0,0)
 } BallCoord;
 
 typedef struct {
   int robotID; // 0 = manager, 1 = worker, 2 = enemy
-  float x; // in from top left
-  float y; // in from top left
+  float x; // in above center of field (0,0)
+  float y; // in right of center of field (0,0)
   float deg; // heading in degrees, counterclockwise from +x
-  float size; // width in in, 15 or 24 (or -1 if unknown for enemy bots)
+  int size; // width in in, 15 or 24 (or -1 if unknown for enemy bots)
 } RobotCoord;
 
 class Map {

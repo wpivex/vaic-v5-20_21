@@ -8,8 +8,9 @@
 /*    Created:    20 August 2020                                              */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
-#include "vex.h"
 #include <math.h>
+#include "vex.h"
+#include "map.h"
 
 using namespace vex;
 
@@ -170,18 +171,75 @@ static void drawFromVexLink() {
   Brain.Screen.printAt(xText, yText += 15, "Timeouts  %d", link.get_timeouts());
 } // drawFromVexLink()
 
+void updateMapObj(Map map) {
+  MAP_RECORD mapRecord; // Map from the Jetson
+
+  jetson_comms.get_data(&mapRecord);
+
+  // get ball data from mapRecord
+  int numBalls = mapRecord.mapnum;
+  BallCoord balls[numBalls];
+
+  for (int i = 0; i < numBalls; i++) {
+    float x = (mapRecord.mapobj[i].positionX / -25.4); // hopefully in to the right of (0,0), need to test on field
+    float y = (mapRecord.mapobj[i].positionY / 25.4); // hopefully in above of (0,0), need to test on field
+    balls[i] = {mapRecord.mapobj[i].classID, x, y};
+  }
+
+  map.setBallCoords(balls, numBalls);
+
+  // get manager robot data from mapRecord and worker data from vex link coords
+  RobotCoord robots[2];
+
+  robots[0] = {
+    0, 
+    mapRecord.pos.x / -25.4f, 
+    mapRecord.pos.y / 25.4f, 
+    (float) (mapRecord.pos.az * 360 / (2 * M_PI) + 180), // hopefully starts at +x and increases counterclockwise, need to test on field
+    24
+  };
+
+  if (link.isLinked()) {
+    float workerX, workerY, workerHeading;
+    link.get_remote_location(workerX, workerY, workerHeading);
+
+    robots[1] = {
+      1, 
+      workerX / -25.4f, 
+      workerY / 25.4f, 
+      (float) (workerHeading * 360 / (2 * M_PI) + 180), // hopefully starts at +x and increases counterclockwise, need to test on field
+      15
+    };
+  }
+
+  map.setRobotCoords(robots, 2);
+} // updateMapObj(Map)
+
+void drawFromMap(Map map) {
+
+}
+
 // Task to update screen with status
 int dashboardTask() {
   Brain.Screen.setFont(mono15);
-  
-  while(true) {
-    drawFieldBackground();
-    drawFromJetson();
-    drawFromVexLink();
-    Brain.Screen.render(); 
+
+  Map map; // Internal map class
+
+  while (true) {
+    updateMapObj(map);
+    drawFromMap(map);
 
     this_thread::sleep_for(16);
   }
+  
+  // while(true) {
+  //   drawFieldBackground();
+  //   drawFromJetson();
+  //   drawFromVexLink();
+  //   Brain.Screen.render(); 
+
+  //   this_thread::sleep_for(16);
+  // }
 
   return 0;
 }
