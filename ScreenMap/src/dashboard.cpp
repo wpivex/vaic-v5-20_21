@@ -84,21 +84,21 @@ static void drawJetsonStats() {
 } // drawJetsonStats()
 
 // Draws the manager and balls on the map as well as the manager's coords on the right side
-void drawManagerAndBalls(Map map) {
+void drawManagerAndBalls(Map* map) {
   int xText = 260, yText = 80;
 
-  RobotCoord posData = map.getManagerCoords();
+  RobotCoord posData = map->getManagerCoords();
 
   Brain.Screen.printAt(xText, yText += 90, "x(ft): %.2f  y(ft): %.2f", posData.x / 12, posData.y / 12);
   Brain.Screen.printAt(xText, yText += 15, "heading(deg): %.2f", posData.deg);
 
   // Draw map w/ balls and manager robot
-  for(int i = 0; i < map.getNumBalls(); i++) {
+  for(int i = 0; i < map->getNumBalls(); i++) {
     // positionX and positionY have 0,0 in the middle of the field w/ +x right and +y down
-    int xCenter = (int) (map.getBallCoords()[i].x / 12 * PX_PER_FT + 119); // in -> px
-    int yCenter = (int) (map.getBallCoords()[i].y / 12 * PX_PER_FT + 119); // in -> px
+    int xCenter = (int) (map->getBallCoords()[i].x / 12 * PX_PER_FT + 119); // in -> px
+    int yCenter = (int) (map->getBallCoords()[i].y / 12 * PX_PER_FT + 119); // in -> px
 
-    color ballColor = map.getBallCoords()[i].colorID == 0 ? red : blue; // class ID 0 = red and 1 = blue
+    color ballColor = map->getBallCoords()[i].colorID == 0 ? red : blue; // class ID 0 = red and 1 = blue
     Brain.Screen.setPenColor(ballColor); 
     Brain.Screen.setFillColor(ballColor);
     Brain.Screen.drawCircle(xCenter, yCenter, 5);
@@ -121,7 +121,7 @@ void drawManagerAndBalls(Map map) {
 } // drawManager(Map)
 
 // Draws map and stats for worker robot as well as general Vex Link data
-static void drawWorker(Map map) {
+static void drawWorker(Map* map) {
   static int32_t last_packets = 0;
   static int32_t total_packets = 0;
   static uint32_t update_time = 0;
@@ -136,13 +136,13 @@ static void drawWorker(Map map) {
   int xText = 260, yText = 200;
 
   // Only draw alliance robot and print remote robot data if vex link is working
-  if (map.getWorkerCoords().robotID != -1) {
+  if (map->getWorkerCoords().robotID != -1) {
     Brain.Screen.setPenColor(green);
     Brain.Screen.printAt(250, 95, "Vex Link(Connected):");
 
-    float x = map.getWorkerCoords().x * 12;
-    float y = map.getWorkerCoords().y * 12;
-    float deg = map.getWorkerCoords().deg;
+    float x = map->getWorkerCoords().x * 12;
+    float y = map->getWorkerCoords().y * 12;
+    float deg = map->getWorkerCoords().deg;
     float rad = deg * M_PI / 360;
 
     // Print remote robot data
@@ -176,7 +176,7 @@ static void drawWorker(Map map) {
   Brain.Screen.printAt(xText, yText += 15, "Timeouts  %d", link.get_timeouts());
 } // drawWorker()
 
-void updateMapObj(Map map) {
+void updateMapObj(Map* map) {
   MAP_RECORD mapRecord; // Map from the Jetson
 
   jetson_comms.get_data(&mapRecord);
@@ -191,7 +191,7 @@ void updateMapObj(Map map) {
     balls[i] = {mapRecord.mapobj[i].age, mapRecord.mapobj[i].classID, x, y};
   }
 
-  map.setBallCoords(balls, numBalls);
+  map->setBallCoords(balls, numBalls);
 
   // get manager robot data from mapRecord and worker data from vex link coords
   RobotCoord robots[2];
@@ -220,10 +220,10 @@ void updateMapObj(Map map) {
     numRobots++;
   }
 
-  map.setRobotCoords(robots, numRobots);
+  map->setRobotCoords(robots, numRobots);
 } // updateMapObj(Map)
 
-void drawFromMap(Map map) {
+void drawFromMap(Map* map) {
   drawFieldBackground();
   drawJetsonStats();
 
@@ -240,8 +240,8 @@ int dashboardTask() {
   Map map; // Internal map class
 
   while (true) {
-    updateMapObj(map);
-    drawFromMap(map);
+    updateMapObj(&map);
+    drawFromMap(&map);
 
     this_thread::sleep_for(16);
   }
