@@ -12,3 +12,72 @@
 
 using namespace vex;
 using namespace ai;
+
+BallCoord* Map::getBallCoords(void) {
+  return balls;
+}
+
+int Map::getNumBalls(void) {
+  return numBalls;
+}
+
+RobotCoord Map::getHostCoords(void) {
+  return host;
+}
+
+RobotCoord Map::getClientCoords(void) {
+  return client;
+}
+
+RobotCoord* Map::getEnemyCoords(void) {
+  return enemies;
+}
+
+int Map::getNumEnemies(void) {
+  return numEnemies;
+}
+
+// void Map::addBallCoord(BallCoord coord) {
+//   // TODO implement intelligent management of existing elements given new data
+// }
+
+// void Map::addRobotCoord(RobotCoord coord) {
+//   // TODO implement intelligent management of existing elements given new data
+// }
+
+void Map::setBallCoords(BallCoord* coords, int numCoords) {
+  for (int i = 0; i < MAX_BALLS; i++) {
+    if (i < numCoords)
+      balls[i] = coords[i];
+    else 
+      balls[i] = {};
+  }
+
+  numBalls = numCoords;
+}
+
+void Map::setRobotCoords(RobotCoord* coords, int numCoords) {
+  host = {};
+  client = {};
+  
+  for (int i = 0; i < MAX_ENEMIES; i++)
+    enemies[i] = {};
+  numEnemies = 0;
+
+  for (int i = 0; i < numCoords; i++) {
+    switch(coords[i].robotID) {
+      case 0: 
+        host = coords[i];
+        break;
+
+      case 1:
+        client = coords[i];
+        break;
+
+      case 2:
+        if (numEnemies < MAX_ENEMIES)
+          enemies[numEnemies++] = coords[i];
+        break;
+    }
+  }
+}

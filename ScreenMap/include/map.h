@@ -10,23 +10,23 @@
 #ifndef MAP_H_
 #define MAP_H_
 
+typedef struct {
+  int colorID; // 0 = red, 1 = blue
+  float x; // in from top left
+  float y; // in from top right
+} BallCoord;
+
+typedef struct {
+  int robotID; // 0 = host, 1 = client, 2 = enemy
+  float x; // in from top left
+  float y; // in from top left
+  float deg; // heading in degrees, counterclockwise from +x
+  float size; // width in in, 15 or 24 (or -1 if unknown for enemy bots)
+} RobotCoord;
+
 class Map {
   public:
-    typedef struct {
-      int colorID; // 0 = red, 1 = blue
-      float x; // in from top left
-      float y; // in from top right
-    } BallCoord;
-
-    typedef struct {
-      float robotID; // 0 = host, 1 = client, 2 = enemy
-      float x; // in from top left
-      float y; // in from top left
-      float deg; // heading in degrees, counterclockwise from +x
-      float size; // width in in, 15 or 24 (or -1 if unknown for enemy bots)
-    } RobotCoord;
-
-    Map();
+    const static int MAX_BALLS = 36, MAX_ENEMIES = 2;
 
     BallCoord* getBallCoords(void);
     int getNumBalls(void);
@@ -38,15 +38,20 @@ class Map {
     // Methods to be used by host/client bots to add to the shared map.
     // Interpretation of new data and removal of old elements will be handled in this class,
     // and the bots will only report what they see.
-    void addBallCoord(BallCoord);
-    void addRobotCoord(RobotCoord);
+    // void addBallCoord(BallCoord);
+    // void addRobotCoord(RobotCoord);
+
+    // Methods to be used by host/client bots to completely overwrite all map data.
+    // Useful for testing mapping from one robot while the add methods are not finished.
+    void setBallCoords(BallCoord*, int);
+    void setRobotCoords(RobotCoord*, int);
 
   private:
-    int numBalls, numEnemies; // number of each currently on the map
-    BallCoord balls[36]; // not all elements will likely be used simultaneously
+    int numBalls = 0, numEnemies = 0; // number of each currently on the map
+    BallCoord balls[MAX_BALLS]; // not all elements will likely be used simultaneously
     RobotCoord host;
     RobotCoord client;
-    RobotCoord enemies[2];
+    RobotCoord enemies[MAX_ENEMIES];
 };
 
 #endif
