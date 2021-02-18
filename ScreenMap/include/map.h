@@ -17,7 +17,7 @@ typedef struct {
 } BallCoord;
 
 typedef struct {
-  int robotID; // 0 = host, 1 = client, 2 = enemy
+  int robotID; // 0 = manager, 1 = worker, 2 = enemy
   float x; // in from top left
   float y; // in from top left
   float deg; // heading in degrees, counterclockwise from +x
@@ -30,18 +30,18 @@ class Map {
 
     BallCoord* getBallCoords(void);
     int getNumBalls(void);
-    RobotCoord getHostCoords(void);
-    RobotCoord getClientCoords(void);
+    RobotCoord getManagerCoords(void);
+    RobotCoord getWorkerCoords(void);
     RobotCoord* getEnemyCoords(void);
     int getNumEnemies(void);
 
-    // Methods to be used by host/client bots to add to the shared map.
+    // Methods to be used by manager/worker bots to add to the shared map.
     // Interpretation of new data and removal of old elements will be handled in this class,
     // and the bots will only report what they see.
     // void addBallCoord(BallCoord);
     // void addRobotCoord(RobotCoord);
 
-    // Methods to be used by host/client bots to completely overwrite all map data.
+    // Methods to be used by manager/worker bots to completely overwrite all map data.
     // Useful for testing mapping from one robot while the add methods are not finished.
     void setBallCoords(BallCoord*, int);
     void setRobotCoords(RobotCoord*, int);
@@ -49,8 +49,8 @@ class Map {
   private:
     int numBalls = 0, numEnemies = 0; // number of each currently on the map
     BallCoord balls[MAX_BALLS]; // not all elements will likely be used simultaneously
-    RobotCoord host;
-    RobotCoord client;
+    RobotCoord manager;
+    RobotCoord worker;
     RobotCoord enemies[MAX_ENEMIES];
 };
 

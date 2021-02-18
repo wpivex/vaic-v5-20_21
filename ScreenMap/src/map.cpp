@@ -21,12 +21,12 @@ int Map::getNumBalls(void) {
   return numBalls;
 }
 
-RobotCoord Map::getHostCoords(void) {
-  return host;
+RobotCoord Map::getManagerCoords(void) {
+  return manager;
 }
 
-RobotCoord Map::getClientCoords(void) {
-  return client;
+RobotCoord Map::getWorkerCoords(void) {
+  return worker;
 }
 
 RobotCoord* Map::getEnemyCoords(void) {
@@ -57,8 +57,8 @@ void Map::setBallCoords(BallCoord* coords, int numCoords) {
 }
 
 void Map::setRobotCoords(RobotCoord* coords, int numCoords) {
-  host = {};
-  client = {};
+  manager = {};
+  worker = {};
   
   for (int i = 0; i < MAX_ENEMIES; i++)
     enemies[i] = {};
@@ -67,11 +67,11 @@ void Map::setRobotCoords(RobotCoord* coords, int numCoords) {
   for (int i = 0; i < numCoords; i++) {
     switch(coords[i].robotID) {
       case 0: 
-        host = coords[i];
+        manager = coords[i];
         break;
 
       case 1:
-        client = coords[i];
+        worker = coords[i];
         break;
 
       case 2:
