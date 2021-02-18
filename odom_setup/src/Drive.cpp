@@ -10,7 +10,28 @@ const double Kpstraight = 4;//We probably want a seperate Kp value for turning b
 const double Kpturn = 2;
 
 Drive::Drive() {
-   
+   myPose.x = 0.0;
+   myPose.y = 0.0;
+   myPose.theta = 0.0;
+}
+
+void Drive::setPose(Pose newPose){
+  myPose.x = newPose.x;
+  myPose.y = newPose.y;
+  myPose.theta = newPose.theta;
+}
+
+void Drive::goTo(Pose newPose){
+  double dx = newPose.x-myPose.x;
+  double dy = newPose.y-myPose.y;
+
+  double turn1 = (atan2(dy, dx)*180/3.14) - myPose.theta;//Calculate angle to new position, subtract surrent angle to know how much to turn
+  turnDegrees(turn1);//Heading is updated within this function
+
+  double dist = sqrt(dx*dx+dy*dy);
+  driveDistance(dist);//Position is updated within this function
+
+  turnDegrees(newPose.theta-myPose.theta);//Heading is updated within this function
 }
 
 
@@ -41,6 +62,8 @@ void Drive::turnDegrees(double angle){
 
   LeftDriveSmart.stop();
   RightDriveSmart.stop();
+
+  myPose.theta = myPose.theta+angle;
 }
 
 
@@ -74,4 +97,11 @@ void Drive::driveDistance(double inches){
 
   LeftDriveSmart.stop();
   RightDriveSmart.stop();
+
+  //Update pose
+  double xDir = inches*cos(myPose.theta);
+  double yDir = inches*sin(myPose.theta);
+
+  myPose.x = myPose.x + xDir;
+  myPose.y = myPose.y + yDir;
 }

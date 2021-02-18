@@ -116,15 +116,22 @@ int main() {
     Competition.autonomous(autonomousMain);
     
     Drive* drive = new Drive();
-    drive->turnDegrees(45);
+    /*drive->turnDegrees(45);
     leftIntake.spin(directionType::fwd,100,percentUnits::pct);
     rightIntake.spin(directionType::fwd,100,percentUnits::pct);
     rollerBack.spin(directionType::fwd,100,percentUnits::pct);
-    drive->driveDistance(24);
+    drive->driveDistance(24);*/
+    Pose p;
+    p.x = 24;
+    p.y =24;
+    p.theta = 0;
+
+    drive->goTo(p);
 
     while(1) {
-      leftIntake.spin(directionType::fwd,100,percentUnits::pct);
-      rightIntake.spin(directionType::fwd,100,percentUnits::pct);
+
+      /*leftIntake.spin(directionType::fwd,100,percentUnits::pct);
+      rightIntake.spin(directionType::fwd,100,percentUnits::pct);*/
         Brain.Screen.clearScreen();
         Brain.Screen.setCursor(2, 1);
         Brain.Screen.print("Left Encoder:");
