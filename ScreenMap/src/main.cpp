@@ -11,6 +11,7 @@
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
 #include "vex.h"
+#include "map.h"
 
 using namespace vex;
 
@@ -20,6 +21,8 @@ competition Competition;
 // create instance of jetson class to receive location and other
 // data from the Jetson nano
 ai::jetson jetson_comms;
+
+Map* map = new Map(); // instantiation of global Map object from vex.h
 
 /*----------------------------------------------------------------------------*/
 // Create a robot_link on PORT1 using the unique name robot_32456_1

@@ -12,9 +12,6 @@
 #include "vex.h"
 #include "map.h"
 
-#include<string>
-#include<sstream>
-
 using namespace vex;
 
 const color grey = vex::color(0x404040);
@@ -237,23 +234,12 @@ void drawFromMap(Map* map) {
 int dashboardTask() {
   Brain.Screen.setFont(mono15);
 
-  Map map; // Internal map class
-
   while (true) {
-    updateMapObj(&map);
-    drawFromMap(&map);
+    updateMapObj(map);
+    drawFromMap(map);
 
     this_thread::sleep_for(16);
   }
-  
-  // while(true) {
-  //   drawFieldBackground();
-  //   drawFromJetson();
-  //   drawFromVexLink();
-  //   Brain.Screen.render(); 
-
-  //   this_thread::sleep_for(16);
-  // }
 
   return 0;
 }
