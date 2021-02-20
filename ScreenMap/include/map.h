@@ -10,20 +10,22 @@
 #ifndef MAP_H_
 #define MAP_H_
 
-typedef struct {
-  int32_t age; // number of frames since this ball was last mapped
-  int colorID; // 0 = red, 1 = blue, -1 = invalid
-  float x; // in above center of field (0,0)
-  float y; // in right of center of field (0,0)
-} BallCoord;
+class BallCoord {
+  public:
+    int32_t age; // number of frames since this ball was last mapped
+    int colorID; // 0 = red, 1 = blue, -1 = invalid
+    float x; // in above center of field (0,0)
+    float y; // in right of center of field (0,0)
+};
 
-typedef struct {
-  int robotID; // 0 = manager, 1 = worker, 2 = enemy, -1 = invalid
-  float x; // in above center of field (0,0)
-  float y; // in right of center of field (0,0)
-  float deg; // heading in degrees, counterclockwise from +x
-  int size; // width in in, 15 or 24 (or -1 if unknown for enemy bots)
-} RobotCoord;
+class RobotCoord {
+  public:
+    int robotID; // 0 = manager, 1 = worker, 2 = enemy, -1 = invalid
+    float x; // in above center of field (0,0)
+    float y; // in right of center of field (0,0)
+    float deg; // heading in degrees, counterclockwise from +x
+    int size; // width in in, 15 or 24 (or -1 if unknown for enemy bots)
+};
 
 class Map {
   public:

@@ -17,8 +17,8 @@
 
 #include "ai_jetson.h"
 #include "ai_robot_link.h"
-
 #include "robot-config.h"
+#include "map.h"
 
 #define waitUntil(condition)                                                   \
   do {                                                                         \
@@ -28,7 +28,9 @@
 #define repeat(iterations)                                                     \
   for (int iterator = 0; iterator < iterations; iterator++)
 
-extern ai::jetson      jetson_comms;
-extern ai::robot_link  link;
+extern ai::jetson jetson_comms;
+extern ai::robot_link link;
 
-extern int dashboardTask( void );
+extern int dashboardTask(void);
+
+extern Map* map; // global instance of the shared Map object
