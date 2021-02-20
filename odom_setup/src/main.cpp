@@ -14,10 +14,14 @@
 
 #include "Drive.h"
 
+
 using namespace vex;
 
 // A global instance of competition
 competition Competition;
+
+Map* map = new Map();
+
 
 // create instance of jetson class to receive location and other
 // data from the Jetson nano
@@ -111,27 +115,43 @@ int main() {
     // Initializing Robot Configuration. DO NOT REMOVE!
     vexcodeInit();
 
+    // local storage for latest data from the Jetson Nano
+    static MAP_RECORD  local_map;
+
+    // RUn at about 15Hz
+    int32_t loop_time = 66;
+    // start the status update display
+    thread t1 = thread(dashboardTask);
+
 
     // Set up callbacks for autonomous and driver control periods.
     Competition.autonomous(autonomousMain);
     
     Drive* drive = new Drive();
-    /*drive->turnDegrees(45);
-    leftIntake.spin(directionType::fwd,100,percentUnits::pct);
-    rightIntake.spin(directionType::fwd,100,percentUnits::pct);
-    rollerBack.spin(directionType::fwd,100,percentUnits::pct);
-    drive->driveDistance(24);*/
+  
     Pose p;
     p.x = 24;
     p.y =24;
     p.theta = 0;
 
-    drive->goTo(p);
+    //drive->goTo(p);
 
     while(1) {
+        // get last map data
+        jetson_comms.get_data( &local_map );
 
-      /*leftIntake.spin(directionType::fwd,100,percentUnits::pct);
-      rightIntake.spin(directionType::fwd,100,percentUnits::pct);*/
+        // set our location to be sent to partner robot
+        link.set_remote_location( local_map.pos.x, local_map.pos.y, local_map.pos.az );
+
+        //fprintf(fp, "%.2f %.2f %.2f\n", local_map.pos.x, local_map.pos.y, local_map.pos.az  );
+
+        // request new data    
+        // NOTE: This request should only happen in a single task.    
+        jetson_comms.request_map();
+
+        // Allow other tasks to run
+        this_thread::sleep_for(loop_time);
+        /*
         Brain.Screen.clearScreen();
         Brain.Screen.setCursor(2, 1);
         Brain.Screen.print("Left Encoder:");
@@ -141,6 +161,6 @@ int main() {
 
         yeet.spin(directionType::fwd,100,percentUnits::pct);
 
-        this_thread::sleep_for(100);
+        this_thread::sleep_for(100);*/
     }
 }

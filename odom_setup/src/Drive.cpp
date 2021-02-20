@@ -52,6 +52,7 @@ void Drive::turnDegrees(double angle){
     error = (leftError+rightError)/2;
 
     double driveValue = std::max(std::min(MAX_DRIVE_PERCENTAGE, std::abs(Kpturn*error)), MIN_DRIVE_PERCENTAGE);
+    
     if(error<0)
       driveValue = - driveValue;
 

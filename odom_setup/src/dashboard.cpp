@@ -1,3 +1,4 @@
+#pragma once
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Copyright (c) Innovation First 2020 All rights reserved.                */
@@ -8,177 +9,253 @@
 /*    Created:    20 August 2020                                              */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
+#include <math.h>
 #include "vex.h"
+#include "map.h"
+
+#include<string>
+#include<sstream>
 
 using namespace vex;
 
-//
-// Display various useful information about the Jetson
-//
-static void
-dashboardJetson( int ox, int oy, int width, int height ) {
-  static int32_t     last_data = 0;
-  static int32_t     last_packets = 0;
-  static int32_t     total_data = 0;
-  static int32_t     total_packets = 0;
-  static uint32_t    update_time = 0;
-  static MAP_RECORD  local_map;
-  color grey = vex::color(0x404040);
 
-  Brain.Screen.setClipRegion( ox, oy, width, height);
-  Brain.Screen.setFont( mono15 );
-  // border and titlebar
-  Brain.Screen.setPenColor( yellow );
-  Brain.Screen.drawRectangle(ox, oy, width, height, black );
-  Brain.Screen.drawRectangle( ox, oy, width, 20, grey );
+const color grey = vex::color(0x404040);
+const color darkred = vex::color(0x800000);
+const color darkgreen = vex::color(0x008000);
 
-  Brain.Screen.setPenColor( yellow );
-  Brain.Screen.setFillColor( grey );
-  Brain.Screen.printAt(ox + 10, oy + 15, "Jetson" );
-  oy += 20;
-  
-  Brain.Screen.setPenColor( white );
-  Brain.Screen.setFillColor( black );
-  
-  // get last map data
-  jetson_comms.get_data( &local_map );
+const int PX_PER_FT = 20; // 240px for 12ft
 
-  Brain.Screen.printAt( ox + 10, oy += 15, "Packets   %d", jetson_comms.get_packets() );
-  Brain.Screen.printAt( ox + 10, oy += 15, "Errors    %d", jetson_comms.get_errors() );
-  Brain.Screen.printAt( ox + 10, oy += 15, "Timeouts  %d", jetson_comms.get_timeouts() );
-  Brain.Screen.printAt( ox + 10, oy += 15, "data/sec  %d             ", total_data );
-  Brain.Screen.printAt( ox + 10, oy += 15, "pkts/sec  %d             ", total_packets );
-  Brain.Screen.printAt( ox + 10, oy += 15, "boxnum    %d", local_map.boxnum );
-  Brain.Screen.printAt( ox + 10, oy += 15, "mapnum    %d", local_map.mapnum );
+// Draws the static objects on the field, the grey background and the nine goals.
+static void drawFieldBackground() {
+  // Draw Field Carpet
+  Brain.Screen.setPenColor(black);
+  Brain.Screen.drawRectangle(0, 0, 240, 240, grey);
 
-  // once per second, update data rate stats
-  if( Brain.Timer.system() > update_time ) {
-    update_time = Brain.Timer.system() + 1000;
-    total_data = jetson_comms.get_total() - last_data;
-    total_packets = jetson_comms.get_packets() - last_packets;
-    last_data = jetson_comms.get_total();
-    last_packets = jetson_comms.get_packets();
-  }
-  
-  Brain.Screen.setFont( mono12 );
-  for(int i=0;i<4;i++ ) {
-    if( i < local_map.boxnum ) {
-      Brain.Screen.printAt( ox + 10, oy += 12, "box %d: c:%d x:%d y:%d w:%d h:%d prob:%.1f",i,
-                           (local_map.boxobj[i].classID), //Class ID (0 = Red 1 = Blue 2 = Goal)
-                           (local_map.boxobj[i].x), //in pixels
-                           (local_map.boxobj[i].y), //in pixels
-                           (local_map.boxobj[i].width), //in pixels
-                           (local_map.boxobj[i].height), //in pixels
-                           (local_map.boxobj[i].prob)); //percent likely to be in this catagory
-    }
-    else {
-      Brain.Screen.printAt( ox + 10, oy += 12, "---");
+  // Draw 9 goals
+  for (int xGoal = 0; xGoal < 3; xGoal++) { // lower numbers are to the left
+    for (int yGoal = 0; yGoal < 3; yGoal++) { // lower numbers are towards the top
+      int xCenter = xGoal * 120 + (1 - xGoal) * 9;
+      int yCenter = yGoal * 120 + (1 - yGoal) * 9;
+
+      Brain.Screen.drawCircle(xCenter, yCenter, 8, black);
+      Brain.Screen.drawCircle(xCenter, yCenter, 6, grey);
     }
   }
-  for(int i=0;i<4;i++ ) {
-    if( i < local_map.mapnum ) {
-      Brain.Screen.printAt( ox + 10, oy += 12, "map %d: a:%4d c:%4d X:%.2f Y:%.2f Z:%.1f",i,
-                           local_map.mapobj[i].age,
-                           local_map.mapobj[i].classID,
-                           (local_map.mapobj[i].positionX / -25.4),  // mm -> inches
-                           (local_map.mapobj[i].positionY / -25.4),  // mm -> inches
-                           (local_map.mapobj[i].positionZ / 25.4)); // mm -> inches
-    }
-    else {
-      Brain.Screen.printAt( ox + 10, oy += 12, "---");
-    }
-  }
-
 }
 
-//
-// Display various useful information about VEXlink
-//
-static void
-dashboardVexlink( int ox, int oy, int width, int height ) {
-  static int32_t last_data = 0;
+// Draws packet stats from the Jetson on the right side of the screen.
+static void drawJetsonStats() {
+  static MAP_RECORD local_map;
+
   static int32_t last_packets = 0;
-  static int32_t total_data = 0;
   static int32_t total_packets = 0;
-  static uint32_t update_time = 0;  
+  static uint32_t update_time = 0;
 
-  color darkred = vex::color(0x800000);
-  color darkgrn = vex::color(0x008000);
+  jetson_comms.get_data(&local_map);
 
-  Brain.Screen.setClipRegion( ox, oy, width, height);
-  Brain.Screen.setFont( mono15 );
-
-  // border and titlebar
-  Brain.Screen.setPenColor( yellow );
-  Brain.Screen.drawRectangle(ox, oy, width, height, black );
-  Brain.Screen.drawRectangle( ox, oy, width, 20 );
-
-  // Link status in titlebar
-  if( link.isLinked() ) {
-    Brain.Screen.setPenColor(darkgrn);
-    Brain.Screen.setFillColor(darkgrn);
-    Brain.Screen.drawRectangle( ox+1, oy+1, width-2, 18 );
-    Brain.Screen.setPenColor(yellow);
-    Brain.Screen.printAt( ox + 10, oy + 15, "VEXlink: Good" );
+  // Once per second, update data rate stats
+  if(Brain.Timer.system() > update_time) {
+    update_time = Brain.Timer.system() + 1000;
+    total_packets = jetson_comms.get_packets() - last_packets;
+    last_packets = jetson_comms.get_packets();
   }
-  else {
-    Brain.Screen.setPenColor(darkred);
-    Brain.Screen.setFillColor(darkred);
-    Brain.Screen.drawRectangle( ox+1, oy+1, width-2, 18 );
-    Brain.Screen.setPenColor(yellow);
-    Brain.Screen.printAt(ox + 10, oy + 15, "VEXlink: Disconnected" );
-  }
-  oy += 20;
+
+  // Draw Stats screen background
+  Brain.Screen.setPenColor(yellow);
+  Brain.Screen.drawRectangle(240, 0, 240, 240, black);
+
+  Brain.Screen.drawRectangle(240, 0, 240, 20, grey);
+  Brain.Screen.setFillColor(grey);
+  Brain.Screen.printAt(250, 15, "Stats");
 
   Brain.Screen.setFillColor(black);
-  Brain.Screen.setPenColor(white);
-  Brain.Screen.printAt( ox + 10, oy += 15, "Packets   %d", link.get_packets() );
-  Brain.Screen.printAt( ox + 10, oy += 15, "Errors    %d", link.get_errors() );
-  Brain.Screen.printAt( ox + 10, oy += 15, "Timeouts  %d", link.get_timeouts() );
-  Brain.Screen.printAt( ox + 10, oy += 15, "data/sec  %d  ", total_data);
-  Brain.Screen.printAt( ox + 10, oy += 15, "pkts/sec  %d  ", total_packets);
+  Brain.Screen.printAt(250, 155, "Local Location:");
 
-  // once per second, update data rate stats
+  // Color = status: red = no packets, green = packets
+  Brain.Screen.setPenColor(total_packets == 0 ? red : green); 
+  Brain.Screen.printAt(250, 35, true, "Jetson%s:", total_packets == 0 ? "(Disconnected)" : "(Connected)");
+
+  // Print stats on the right
+  Brain.Screen.setPenColor(yellow);
+
+  int xText = 260, yText = 50;
+
+  Brain.Screen.printAt(xText, yText, "pkts/sec  %d", total_packets);
+  Brain.Screen.printAt(xText, yText += 15, "Errors    %d", jetson_comms.get_errors());    
+  Brain.Screen.printAt(xText, yText += 15, "Timeouts  %d", jetson_comms.get_timeouts());
+} // drawJetsonStats()
+
+// Draws the manager and balls on the map as well as the manager's coords on the right side
+void drawManagerAndBalls(Map* map) {
+  int xText = 260, yText = 80;
+
+  RobotCoord posData = map->getManagerCoords();
+
+  Brain.Screen.printAt(xText, yText += 90, "x(ft): %.2f  y(ft): %.2f", posData.x / 12, posData.y / 12);
+  Brain.Screen.printAt(xText, yText += 15, "heading(deg): %.2f", posData.deg);
+
+  // Draw map w/ balls and manager robot
+  for(int i = 0; i < map->getNumBalls(); i++) {
+    // positionX and positionY have 0,0 in the middle of the field w/ +x right and +y down
+    int xCenter = (int) (map->getBallCoords()[i].x / 12 * PX_PER_FT + 119); // in -> px
+    int yCenter = (int) (map->getBallCoords()[i].y / 12 * PX_PER_FT + 119); // in -> px
+
+    color ballColor = map->getBallCoords()[i].colorID == 0 ? red : blue; // class ID 0 = red and 1 = blue
+    Brain.Screen.setPenColor(ballColor); 
+    Brain.Screen.setFillColor(ballColor);
+    Brain.Screen.drawCircle(xCenter, yCenter, 5);
+
+    // TODO do something with age?
+    // TODO do something with height?
+  }
+
+  Brain.Screen.setFillColor(black);
+
+  // Draw a rectangle for robot and line from the center for heading
+  // TODO draw rotated rectangle to display orientation instead of a line
+  Brain.Screen.setPenColor(black);
+
+  int xRobot = (int) (posData.x / 12 * PX_PER_FT + 119); // coords for center of robot
+  int yRobot = (int) (posData.y / 12 * PX_PER_FT + 119);
+  Brain.Screen.drawRectangle(xRobot - 20, yRobot - 20, 40, 40, green); // 24in robot
+  // TODO fix below based on field data and az conventions
+  Brain.Screen.drawLine(xRobot, yRobot, xRobot + (int) (40 * cos(posData.deg * M_PI / 360)), yRobot - (int) (40 * sin(posData.deg * M_PI / 360)));
+} // drawManager(Map)
+
+// Draws map and stats for worker robot as well as general Vex Link data
+static void drawWorker(Map* map) {
+  static int32_t last_packets = 0;
+  static int32_t total_packets = 0;
+  static uint32_t update_time = 0;
+
+  // Once per second, update data rate stats
   if( Brain.Timer.system() > update_time ) {
-    update_time = Brain.Timer.system() + 1000;    
-    total_data = link.get_total() - last_data;
+    update_time = Brain.Timer.system() + 1000;
     total_packets = link.get_packets() - last_packets;
-    last_data = link.get_total();
     last_packets = link.get_packets();
   }
 
-  oy += 10;
-  Brain.Screen.printAt( ox + 10, oy += 15, "Location: local");
-  
-  float x,y,heading;
-  link.get_local_location(x, y, heading);
-  
-Brain.Screen.printAt( ox + 10, oy += 15, " X:   %.2f", x / -25.4);  // mm -> inches
-  Brain.Screen.printAt( ox + 10, oy += 15, " Y:   %.2f", y / -25.4);  // mm -> inches
-  Brain.Screen.printAt( ox + 10, oy += 15, " H:   %.2f", 180 - (heading / (-2 * M_PI ) * 360) ); // rads to deg
+  int xText = 260, yText = 200;
 
-  oy += 5;
-  Brain.Screen.printAt( ox + 10, oy += 15, "Location: remote");
-  
-  link.get_remote_location(x, y, heading);
-  
-Brain.Screen.printAt( ox + 10, oy += 15, " X:   %.2f", x / -25.4);  // mm -> inches
-  Brain.Screen.printAt( ox + 10, oy += 15, " Y:   %.2f", y / -25.4);  // mm -> inches
-  Brain.Screen.printAt( ox + 10, oy += 15, " H:   %.2f", 180 - (heading / (-2 * M_PI ) * 360) ); // rads to deg
-}
+  // Only draw alliance robot and print remote robot data if vex link is working
+  if (map->getWorkerCoords().robotID != -1) {
+    Brain.Screen.setPenColor(green);
+    Brain.Screen.printAt(250, 95, "Vex Link(Connected):");
 
-//
+    float x = map->getWorkerCoords().x * 12;
+    float y = map->getWorkerCoords().y * 12;
+    float deg = map->getWorkerCoords().deg;
+    float rad = deg * M_PI / 360;
+
+    // Print remote robot data
+    Brain.Screen.setPenColor(yellow);
+
+    Brain.Screen.printAt(xText - 10, yText, "Remote Location:");
+    Brain.Screen.printAt(xText, yText += 15, "x(ft): %.2f  y(ft): %.2f", x, y);
+    Brain.Screen.printAt(xText, yText += 15, "heading(deg): %.2f", deg);
+
+    // Draw a rectangle for robot and line from the center for heading
+    // TODO draw rotated rectangle to display orientation instead of a line
+    Brain.Screen.setPenColor(black);
+    // positionX and positionY have 0,0 in the middle of the field w/ +x right and +y down
+    // TODO check signs
+    int xRobot = (int) (x * PX_PER_FT + 119); // coords for top left corner
+    int yRobot = (int) (y * PX_PER_FT + 119);
+    Brain.Screen.drawRectangle(xRobot - 13, yRobot - 13, 26, 26, cyan); // 15in robot
+    // TODO fix below based on field data and az conventions
+    Brain.Screen.drawLine(xRobot, yRobot, xRobot + (int) (40 * cos(rad)), yRobot - (int) (40 * sin(rad)));
+  } else {
+    Brain.Screen.setPenColor(red);
+    Brain.Screen.printAt(250, 95, "Vex Link(Disconnected):");
+  }
+
+  // Print out Vex Link general stats
+  yText = 110;
+
+  Brain.Screen.setPenColor(yellow);
+  Brain.Screen.printAt(xText, yText, "pkts/sec  %d", total_packets);
+  Brain.Screen.printAt(xText, yText += 15, "Errors    %d", link.get_errors());
+  Brain.Screen.printAt(xText, yText += 15, "Timeouts  %d", link.get_timeouts());
+} // drawWorker()
+
+void updateMapObj(Map* map) {
+  MAP_RECORD mapRecord; // Map from the Jetson
+
+  jetson_comms.get_data(&mapRecord);
+
+  // get ball data from mapRecord
+  int numBalls = mapRecord.mapnum;
+  BallCoord balls[numBalls];
+
+  for (int i = 0; i < numBalls; i++) {
+    float x = (mapRecord.mapobj[i].positionX / -25.4); // hopefully in to the right of (0,0), need to test on field
+    float y = (mapRecord.mapobj[i].positionY / 25.4); // hopefully in above of (0,0), need to test on field
+    balls[i] = {mapRecord.mapobj[i].age, mapRecord.mapobj[i].classID, x, y};
+  }
+
+  map->setBallCoords(balls, numBalls);
+
+  // get manager robot data from mapRecord and worker data from vex link coords
+  RobotCoord robots[2];
+  int numRobots = 1;
+
+  robots[0] = {
+    0, // manager
+    mapRecord.pos.x / -25.4f, // hopefully in to the right of (0,0), need to test on field
+    mapRecord.pos.y / 25.4f, // hopefully in above of (0,0), need to test on field
+    (float) (mapRecord.pos.az * 360 / (2 * M_PI) + 90), // hopefully starts at +x and increases counterclockwise, need to test on field
+    24 // 24 in
+  };
+
+  if (link.isLinked()) {
+    float workerX, workerY, workerHeading;
+    link.get_remote_location(workerX, workerY, workerHeading);
+
+    robots[1] = {
+      1, // worker
+      workerX / -25.4f, // hopefully in to the right of (0,0), need to test on field
+      workerY / 25.4f, // hopefully in above of (0,0), need to test on field
+      (float) (workerHeading * 360 / (2 * M_PI) + 90), // hopefully starts at +x and increases counterclockwise, need to test on field
+      15 // 15 in
+    };
+
+    numRobots++;
+  }
+
+  map->setRobotCoords(robots, numRobots);
+} // updateMapObj(Map)
+
+void drawFromMap(Map* map) {
+  drawFieldBackground();
+  drawJetsonStats();
+
+  drawManagerAndBalls(map);
+  drawWorker(map);
+
+  Brain.Screen.render(); 
+} // drawFromMap(Map)
+
 // Task to update screen with status
-//
-int
-dashboardTask() {
-  while(true) {
-    // status
-    dashboardJetson(    0, 0, 280, 240 );
-    dashboardVexlink( 279, 0, 201, 240 );
-    // draw, at 30Hz
-    Brain.Screen.render();
+int dashboardTask() {
+  Brain.Screen.setFont(mono15);
+
+  //Map map = Map(); // Internal map class
+
+  while (true) {
+    updateMapObj(map);
+    drawFromMap(map);
+
     this_thread::sleep_for(16);
   }
+  
+  // while(true) {
+  //   drawFieldBackground();
+  //   drawFromJetson();
+  //   drawFromVexLink();
+  //   Brain.Screen.render(); 
+
+  //   this_thread::sleep_for(16);
+  // }
+
   return 0;
 }

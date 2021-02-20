@@ -1,3 +1,5 @@
+#ifndef VEX
+#define VEX
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       vex.h                                                     */
@@ -19,6 +21,7 @@
 #include "ai_robot_link.h"
 
 #include "robot-config.h"
+#include "map.h"
 
 #define waitUntil(condition)                                                   \
   do {                                                                         \
@@ -32,3 +35,7 @@ extern ai::jetson      jetson_comms;
 extern ai::robot_link  link;
 
 extern int dashboardTask( void );
+
+extern Map* map;
+
+#endif
