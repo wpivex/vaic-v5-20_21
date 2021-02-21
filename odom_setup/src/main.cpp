@@ -14,7 +14,6 @@
 
 #include "Drive.h"
 
-
 using namespace vex;
 
 // A global instance of competition
@@ -114,14 +113,14 @@ void updateMapObj() {
   jetson_comms.get_data(&mapRecord);
 
   link.set_remote_location(mapRecord.pos.x, mapRecord.pos.y, mapRecord.pos.az);
-
+  
   jetson_comms.request_map();
 
-  // FILE *fp = fopen("/dev/serial2", "w");
+  FILE *fp = fopen("/dev/serial2", "w");
 
-  // fprintf(fp, "%f   %f\n", mapRecord.pos.az, ((-mapRecord.pos.az - M_PI/2) * 360 / (2 * M_PI)));
+  fprintf(fp, "%f %f\n", mapRecord.mapobj[0].positionX, mapRecord.mapobj[0].positionY);
 
-  // fclose(fp);
+  fclose(fp);
 
   // get ball data from mapRecord
   int numBalls = mapRecord.mapnum;
@@ -129,7 +128,7 @@ void updateMapObj() {
 
   for (int i = 0; i < numBalls; i++) {
     float x = (mapRecord.mapobj[i].positionX / -25.4); // hopefully in to the right of (0,0), need to test on field
-    float y = (mapRecord.mapobj[i].positionY / 25.4); // hopefully in above of (0,0), need to test on field
+    float y = (mapRecord.mapobj[i].positionY / -25.4); // hopefully in above of (0,0), need to test on field
     balls[i] = {mapRecord.mapobj[i].age, mapRecord.mapobj[i].classID, x, y};
   }
 

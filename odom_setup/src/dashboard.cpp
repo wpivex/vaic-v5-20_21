@@ -97,7 +97,7 @@ void drawManagerAndBalls() {
     int xCenter = (int) (map->getBallCoords()[i].x / 12 * PX_PER_FT + 119); // in -> px
     int yCenter = (int) (map->getBallCoords()[i].y / 12 * PX_PER_FT + 119); // in -> px
 
-    color ballColor = map->getBallCoords()[i].colorID == 0 ? red : blue; // class ID 0 = red and 1 = blue
+    color ballColor = map->getBallCoords()[i].colorID == 0 ? red : blue;
     Brain.Screen.setPenColor(ballColor); 
     Brain.Screen.setFillColor(ballColor);
     Brain.Screen.drawCircle(xCenter, yCenter, 5);
