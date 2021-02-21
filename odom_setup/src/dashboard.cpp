@@ -13,11 +13,8 @@
 #include "vex.h"
 #include "map.h"
 
-#include<string>
-#include<sstream>
-
 using namespace vex;
-
+using namespace std;
 
 const color grey = vex::color(0x404040);
 const color darkred = vex::color(0x800000);
@@ -119,7 +116,11 @@ void drawManagerAndBalls(Map* map) {
   int yRobot = (int) (posData.y / 12 * PX_PER_FT + 119);
   Brain.Screen.drawRectangle(xRobot - 20, yRobot - 20, 40, 40, green); // 24in robot
   // TODO fix below based on field data and az conventions
-  Brain.Screen.drawLine(xRobot, yRobot, xRobot + (int) (40 * cos(posData.deg * M_PI / 360)), yRobot - (int) (40 * sin(posData.deg * M_PI / 360)));
+  Brain.Screen.drawLine(
+      xRobot, 
+      yRobot, 
+      xRobot + (int) (40 * cos(posData.deg * (2 * M_PI / 360))), 
+      yRobot - (int) (40 * sin(posData.deg * (2 * M_PI / 360))));
 } // drawManager(Map)
 
 // Draws map and stats for worker robot as well as general Vex Link data
@@ -183,6 +184,12 @@ void updateMapObj(Map* map) {
 
   jetson_comms.get_data(&mapRecord);
 
+  // FILE *fp = fopen("/dev/serial2", "w");
+
+  // fprintf(fp, "%f   %f\n", mapRecord.pos.az, ((-mapRecord.pos.az - M_PI/2) * 360 / (2 * M_PI)));
+
+  // fclose(fp);
+
   // get ball data from mapRecord
   int numBalls = mapRecord.mapnum;
   BallCoord balls[numBalls];
@@ -203,7 +210,7 @@ void updateMapObj(Map* map) {
     0, // manager
     mapRecord.pos.x / -25.4f, // hopefully in to the right of (0,0), need to test on field
     mapRecord.pos.y / 25.4f, // hopefully in above of (0,0), need to test on field
-    (float) (mapRecord.pos.az * 360 / (2 * M_PI) + 90), // hopefully starts at +x and increases counterclockwise, need to test on field
+    (float) ((-mapRecord.pos.az - M_PI/2) * 360 / (2 * M_PI)), // starts at +x and increases counterclockwise, range of (-270 : 90)
     24 // 24 in
   };
 
@@ -214,8 +221,8 @@ void updateMapObj(Map* map) {
     robots[1] = {
       1, // worker
       workerX / -25.4f, // hopefully in to the right of (0,0), need to test on field
-      workerY / 25.4f, // hopefully in above of (0,0), need to test on field
-      (float) (workerHeading * 360 / (2 * M_PI) + 90), // hopefully starts at +x and increases counterclockwise, need to test on field
+      workerY / -25.4f, // hopefully in above of (0,0), need to test on field
+      (float) (270 - ((workerHeading * 360 / (2 * M_PI)))), // hopefully starts at +x and increases counterclockwise, need to test on field
       15 // 15 in
     };
 
@@ -239,23 +246,12 @@ void drawFromMap(Map* map) {
 int dashboardTask() {
   Brain.Screen.setFont(mono15);
 
-  //Map map = Map(); // Internal map class
-
   while (true) {
     updateMapObj(map);
     drawFromMap(map);
 
     this_thread::sleep_for(16);
   }
-  
-  // while(true) {
-  //   drawFieldBackground();
-  //   drawFromJetson();
-  //   drawFromVexLink();
-  //   Brain.Screen.render(); 
-
-  //   this_thread::sleep_for(16);
-  // }
 
   return 0;
 }
