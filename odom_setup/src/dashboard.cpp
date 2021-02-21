@@ -83,7 +83,7 @@ static void drawJetsonStats() {
 } // drawJetsonStats()
 
 // Draws the manager and balls on the map as well as the manager's coords on the right side
-void drawManagerAndBalls(Map* map) {
+void drawManagerAndBalls() {
   int xText = 260, yText = 80;
 
   RobotCoord posData = map->getManagerCoords();
@@ -121,10 +121,10 @@ void drawManagerAndBalls(Map* map) {
       yRobot, 
       xRobot + (int) (40 * cos(posData.deg * (2 * M_PI / 360))), 
       yRobot - (int) (40 * sin(posData.deg * (2 * M_PI / 360))));
-} // drawManager(Map)
+} // drawManagerandBalls()
 
 // Draws map and stats for worker robot as well as general Vex Link data
-static void drawWorker(Map* map) {
+static void drawWorker() {
   static int32_t last_packets = 0;
   static int32_t total_packets = 0;
   static uint32_t update_time = 0;
@@ -179,76 +179,22 @@ static void drawWorker(Map* map) {
   Brain.Screen.printAt(xText, yText += 15, "Timeouts  %d", link.get_timeouts());
 } // drawWorker()
 
-void updateMapObj(Map* map) {
-  MAP_RECORD mapRecord; // Map from the Jetson
-
-  jetson_comms.get_data(&mapRecord);
-
-  // FILE *fp = fopen("/dev/serial2", "w");
-
-  // fprintf(fp, "%f   %f\n", mapRecord.pos.az, ((-mapRecord.pos.az - M_PI/2) * 360 / (2 * M_PI)));
-
-  // fclose(fp);
-
-  // get ball data from mapRecord
-  int numBalls = mapRecord.mapnum;
-  BallCoord balls[numBalls];
-
-  for (int i = 0; i < numBalls; i++) {
-    float x = (mapRecord.mapobj[i].positionX / -25.4); // hopefully in to the right of (0,0), need to test on field
-    float y = (mapRecord.mapobj[i].positionY / 25.4); // hopefully in above of (0,0), need to test on field
-    balls[i] = {mapRecord.mapobj[i].age, mapRecord.mapobj[i].classID, x, y};
-  }
-
-  map->setBallCoords(balls, numBalls);
-
-  // get manager robot data from mapRecord and worker data from vex link coords
-  RobotCoord robots[2];
-  int numRobots = 1;
-
-  robots[0] = {
-    0, // manager
-    mapRecord.pos.x / -25.4f, // hopefully in to the right of (0,0), need to test on field
-    mapRecord.pos.y / 25.4f, // hopefully in above of (0,0), need to test on field
-    (float) ((-mapRecord.pos.az - M_PI/2) * 360 / (2 * M_PI)), // starts at +x and increases counterclockwise, range of (-270 : 90)
-    24 // 24 in
-  };
-
-  if (link.isLinked()) {
-    float workerX, workerY, workerHeading;
-    link.get_remote_location(workerX, workerY, workerHeading);
-
-    robots[1] = {
-      1, // worker
-      workerX / -25.4f, // hopefully in to the right of (0,0), need to test on field
-      workerY / -25.4f, // hopefully in above of (0,0), need to test on field
-      (float) (270 - ((workerHeading * 360 / (2 * M_PI)))), // hopefully starts at +x and increases counterclockwise, need to test on field
-      15 // 15 in
-    };
-
-    numRobots++;
-  }
-
-  map->setRobotCoords(robots, numRobots);
-} // updateMapObj(Map)
-
-void drawFromMap(Map* map) {
+void drawFromMap() {
   drawFieldBackground();
   drawJetsonStats();
 
-  drawManagerAndBalls(map);
-  drawWorker(map);
+  drawManagerAndBalls();
+  drawWorker();
 
   Brain.Screen.render(); 
-} // drawFromMap(Map)
+} // drawFromMap()
 
 // Task to update screen with status
 int dashboardTask() {
   Brain.Screen.setFont(mono15);
 
   while (true) {
-    updateMapObj(map);
-    drawFromMap(map);
+    drawFromMap();
 
     this_thread::sleep_for(16);
   }

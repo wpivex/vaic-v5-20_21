@@ -108,59 +108,103 @@ void autonomousMain(void) {
   firstAutoFlag = false;
 }
 
+void updateMapObj() {
+  MAP_RECORD mapRecord; // Map from the Jetson
+
+  jetson_comms.get_data(&mapRecord);
+
+  link.set_remote_location(mapRecord.pos.x, mapRecord.pos.y, mapRecord.pos.az);
+
+  jetson_comms.request_map();
+
+  // FILE *fp = fopen("/dev/serial2", "w");
+
+  // fprintf(fp, "%f   %f\n", mapRecord.pos.az, ((-mapRecord.pos.az - M_PI/2) * 360 / (2 * M_PI)));
+
+  // fclose(fp);
+
+  // get ball data from mapRecord
+  int numBalls = mapRecord.mapnum;
+  BallCoord balls[numBalls];
+
+  for (int i = 0; i < numBalls; i++) {
+    float x = (mapRecord.mapobj[i].positionX / -25.4); // hopefully in to the right of (0,0), need to test on field
+    float y = (mapRecord.mapobj[i].positionY / 25.4); // hopefully in above of (0,0), need to test on field
+    balls[i] = {mapRecord.mapobj[i].age, mapRecord.mapobj[i].classID, x, y};
+  }
+
+  map->setBallCoords(balls, numBalls);
+
+  // get manager robot data from mapRecord and worker data from vex link coords
+  RobotCoord robots[2];
+  int numRobots = 1;
+
+  robots[0] = {
+    0, // manager
+    mapRecord.pos.x / -25.4f, // hopefully in to the right of (0,0), need to test on field
+    mapRecord.pos.y / 25.4f, // hopefully in above of (0,0), need to test on field
+    (float) ((-mapRecord.pos.az - M_PI/2) * 360 / (2 * M_PI)), // starts at +x and increases counterclockwise, range of (-270 : 90)
+    24 // 24 in
+  };
+
+  if (link.isLinked()) {
+    float workerX, workerY, workerHeading;
+    link.get_remote_location(workerX, workerY, workerHeading);
+
+    robots[1] = {
+      1, // worker
+      workerX / -25.4f, // hopefully in to the right of (0,0), need to test on field
+      workerY / -25.4f, // hopefully in above of (0,0), need to test on field
+      (float) (270 - ((workerHeading * 360 / (2 * M_PI)))), // hopefully starts at +x and increases counterclockwise, need to test on field
+      15 // 15 in
+    };
+
+    numRobots++;
+  }
+
+  map->setRobotCoords(robots, numRobots);
+} // updateMapObj()
 
 /*----------------------------------------------------------------------------*/
 
 int main() {
-    // Initializing Robot Configuration. DO NOT REMOVE!
-    vexcodeInit();
+  // Initializing Robot Configuration. DO NOT REMOVE!
+  vexcodeInit();
 
-    // local storage for latest data from the Jetson Nano
-    static MAP_RECORD  local_map;
+  // Run at about 15Hz
+  int32_t loop_time = 66;
 
-    // RUn at about 15Hz
-    int32_t loop_time = 66;
-    // start the status update display
-    thread t1 = thread(dashboardTask);
+  // start the status update display
+  thread t1 = thread(dashboardTask);
 
-
-    // Set up callbacks for autonomous and driver control periods.
-    Competition.autonomous(autonomousMain);
+  // Set up callbacks for autonomous and driver control periods.
+  Competition.autonomous(autonomousMain);
     
-    Drive* drive = new Drive();
+  // Drive* drive = new Drive();
   
-    Pose p;
-    p.x = 24;
-    p.y =24;
-    p.theta = 0;
+  // Pose p;
+  // p.x = 24;
+  // p.y = 24;
+  // p.theta = 0;
 
-    //drive->goTo(p);
+  //drive->goTo(p);
 
-    while(1) {
-        // get last map data
-        jetson_comms.get_data( &local_map );
+  while(1) {
+    updateMapObj();
 
-        // set our location to be sent to partner robot
-        link.set_remote_location( local_map.pos.x, local_map.pos.y, local_map.pos.az );
+    // Allow other tasks to run
+    this_thread::sleep_for(loop_time);
 
-        //fprintf(fp, "%.2f %.2f %.2f\n", local_map.pos.x, local_map.pos.y, local_map.pos.az  );
+    /*
+    Brain.Screen.clearScreen();
+    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.print("Left Encoder:");
+    Brain.Screen.print(leftInches());
+    Brain.Screen.print(" Right Encoder:");
+    Brain.Screen.print(rightInches());
 
-        // request new data    
-        // NOTE: This request should only happen in a single task.    
-        jetson_comms.request_map();
+    yeet.spin(directionType::fwd,100,percentUnits::pct);
 
-        // Allow other tasks to run
-        this_thread::sleep_for(loop_time);
-        /*
-        Brain.Screen.clearScreen();
-        Brain.Screen.setCursor(2, 1);
-        Brain.Screen.print("Left Encoder:");
-        Brain.Screen.print(leftInches());
-        Brain.Screen.print(" Right Encoder:");
-        Brain.Screen.print(rightInches());
-
-        yeet.spin(directionType::fwd,100,percentUnits::pct);
-
-        this_thread::sleep_for(100);*/
-    }
+    this_thread::sleep_for(100);*/
+  }
 }
