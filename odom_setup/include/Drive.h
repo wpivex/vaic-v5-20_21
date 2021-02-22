@@ -15,6 +15,8 @@ class Drive {
 
     void driveDistance(double inches);
     void turnDegrees(double angle);
+
+    Pose getPose();
   private:
     Pose myPose;
 };

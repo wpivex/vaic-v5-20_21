@@ -116,12 +116,6 @@ void updateMapObj() {
   
   jetson_comms.request_map();
 
-  // FILE *fp = fopen("/dev/serial2", "w");
-
-  // fprintf(fp, "%f %f\n", mapRecord.mapobj[0].positionX, mapRecord.mapobj[0].positionY);
-
-  // fclose(fp);
-
   // get ball data from mapRecord
   int numBalls = mapRecord.mapnum;
   BallCoord balls[numBalls];
@@ -179,17 +173,36 @@ int main() {
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomousMain);
     
-  // Drive* drive = new Drive();
-  
-  // Pose p;
-  // p.x = 24;
-  // p.y = 24;
-  // p.theta = 0;
-
-  //drive->goTo(p);
+  Drive* drive = new Drive();
 
   while(1) {
     updateMapObj();
+
+    drive->setPose({ 
+        map->getManagerCoords().x, 
+        map->getManagerCoords().y,
+        map->getManagerCoords().deg
+    });
+
+    int id = -1;
+    for (int i = 0; i < map->getNumBalls(); i++)
+      if (map->getBallCoords()[i].colorID == 0) {
+        id = i;
+        break;
+      }
+
+    if (id != -1) {
+       drive->goTo({
+          map->getBallCoords()[id].x,
+          map->getBallCoords()[id].y,
+          map->getManagerCoords().deg
+      });
+    }
+
+    /*Brain.Screen.clearScreen();
+    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.print("Drive theta:");
+    Brain.Screen.print(drive->getPose().theta);*/
 
     // Allow other tasks to run
     this_thread::sleep_for(loop_time);
