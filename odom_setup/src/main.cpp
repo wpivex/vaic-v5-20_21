@@ -11,8 +11,8 @@
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
 #include "vex.h"
-
 #include "Drive.h"
+#include "commands.h"
 
 using namespace vex;
 
@@ -20,7 +20,6 @@ using namespace vex;
 competition Competition;
 
 Map* map = new Map();
-
 
 // create instance of jetson class to receive location and other
 // data from the Jetson nano
@@ -54,13 +53,11 @@ ai::robot_link       link( PORT11, "robot_32456_1", linkType::worker );
 /*                                                                           */
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
-
 void auto_Isolation(void) {
   // ..........................................................................
   // Insert autonomous user code here.
   // ..........................................................................
 }
-
 
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
@@ -71,14 +68,11 @@ void auto_Isolation(void) {
 /*                                                                           */
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
-
-
 void auto_Interaction(void) {
   // ..........................................................................
   // Insert autonomous user code here.
   // ..........................................................................
 }
-
 
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
@@ -88,7 +82,6 @@ void auto_Interaction(void) {
 /*  a VEX Competition.                                                       */
 /*                                                                           */
 /*---------------------------------------------------------------------------*/
-
 bool firstAutoFlag = true;
 
 void autonomousMain(void) {
@@ -107,6 +100,9 @@ void autonomousMain(void) {
   firstAutoFlag = false;
 }
 
+/*
+ * Updates the global Map obj declared in vex.h with data from the Jetson and vex link
+ */
 void updateMapObj() {
   MAP_RECORD mapRecord; // Map from the Jetson
 
@@ -158,20 +154,14 @@ void updateMapObj() {
   map->setRobotCoords(robots, numRobots);
 } // updateMapObj()
 
-/*----------------------------------------------------------------------------*/
-
 int main() {
-  // Initializing Robot Configuration. DO NOT REMOVE!
-  vexcodeInit();
+  vexcodeInit(); // Initializing Robot Configuration. DO NOT REMOVE!
 
-  // Run at about 15Hz
-  int32_t loop_time = 66;
+  int32_t loop_time = 66; // Run at about 15Hz
 
-  // start the status update display
-  thread t1 = thread(dashboardTask);
+  thread t1 = thread(dashboardTask); // start the status update display
 
-  // Set up callbacks for autonomous and driver control periods.
-  Competition.autonomous(autonomousMain);
+  Competition.autonomous(autonomousMain); // Set up callbacks for autonomous and driver control periods.
     
   Drive* drive = new Drive();
 
@@ -184,28 +174,12 @@ int main() {
         map->getManagerCoords().deg
     });
 
-    int id = -1;
-    for (int i = 0; i < map->getNumBalls(); i++)
-      if (map->getBallCoords()[i].colorID == 0) {
-        id = i;
-        break;
-      }
-
-    if (id != -1) {
-       drive->goTo({
-          map->getBallCoords()[id].x,
-          map->getBallCoords()[id].y,
-          map->getManagerCoords().deg
-      });
-    }
+    goToNearestBall(0, drive);
 
     /*Brain.Screen.clearScreen();
     Brain.Screen.setCursor(2, 1);
     Brain.Screen.print("Drive theta:");
     Brain.Screen.print(drive->getPose().theta);*/
-
-    // Allow other tasks to run
-    this_thread::sleep_for(loop_time);
 
     /*
     Brain.Screen.clearScreen();
@@ -215,8 +189,8 @@ int main() {
     Brain.Screen.print(" Right Encoder:");
     Brain.Screen.print(rightInches());
 
-    yeet.spin(directionType::fwd,100,percentUnits::pct);
+    yeet.spin(directionType::fwd,100,percentUnits::pct);*/
 
-    this_thread::sleep_for(100);*/
+    this_thread::sleep_for(loop_time); // Allow other tasks to run
   }
 }

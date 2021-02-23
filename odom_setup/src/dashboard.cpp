@@ -115,7 +115,7 @@ void drawManagerAndBalls() {
   int xRobot = (int) (posData.x / 12 * PX_PER_FT + 119); // coords for center of robot
   int yRobot = (int) (posData.y / 12 * PX_PER_FT + 119);
   Brain.Screen.drawRectangle(xRobot - 20, yRobot - 20, 40, 40, green); // 24in robot
-  // TODO fix below based on field data and az conventions
+  
   Brain.Screen.drawLine(
       xRobot, 
       yRobot, 
