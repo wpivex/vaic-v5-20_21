@@ -3,6 +3,7 @@
 
 #include "Drive.h"
 
+float getDistanceToBall(Drive* drive, BallCoord* ball);
 void goToNearestBall(int colorID, Drive* drive);
 
 #endif

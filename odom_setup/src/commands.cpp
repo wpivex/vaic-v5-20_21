@@ -1,4 +1,16 @@
 #include "commands.h"
+#include "math.h"
+
+/*
+ * Gets the distance to the ball at the location from BallCoord,
+ * assuming the robot is at drive's current pose
+ */
+float getDistanceToBall(Drive* drive, BallCoord* ball) {
+  float xDiff = drive->getPose().x - ball->x;
+  float yDiff = drive->getPose().y - ball->y;
+
+  return sqrt(xDiff * xDiff + yDiff * yDiff);
+}
 
 /*
  * Goes to the nearest ball of the desired color using the given drive object.
@@ -7,11 +19,17 @@
 void goToNearestBall(int desiredColor, Drive* drive) {
   //TODO make drive object global and remove parameter from above
   int id = -1;
+  float minDistance = -1;
 
   for (int i = 0; i < map->getNumBalls(); i++) {
-    if (map->getBallCoords()[i].colorID == desiredColor) {
-      id = i;
-      break;
+    BallCoord* ball = &map->getBallCoords()[i];
+    float distance = getDistanceToBall(drive, ball);
+
+    if (ball->colorID == desiredColor) {
+      if (minDistance == -1 || minDistance > distance) {
+        id = i;
+        minDistance = distance;
+      }
     }
   }
 
