@@ -52,9 +52,16 @@ void goToNearestBall(int desiredColor, Drive* drive) {
   }
 }
 
+/*
+ * Goes to the nearest goal using the given drive object.
+ * 0 corresponds to a red ball and 1 corresponds to a blue ball.
+ *
+ * TODO for now, the goal is hardcoded to be the bottom right, the only one we have setup.
+ */
 void goToNearestGoal(Drive* drive) {
   // TODO account for obstructions
-  float minX, minY, minDistance = -1;
+  // TODO determine angle based on desired goal and starting location
+  float minX, minY, angle, minDistance = -1;
 
   for (int xGoal = 0; xGoal < 3; xGoal++) { // lower numbers are to the left
     for (int yGoal = 0; yGoal < 3; yGoal++) { // lower numbers are towards the top
@@ -70,9 +77,14 @@ void goToNearestGoal(Drive* drive) {
     }
   }
 
+  // hard code for the only goal we have setup rn, in the bottom right.
+  minX = (2 - 1) * (FIELD_LENGTH_IN) + (1 - 2) * GOAL_RADIUS;
+  minY = (2 - 1) * (FIELD_LENGTH_IN) + (1 - 2) * GOAL_RADIUS;
+  angle = -45;
+
   drive->goTo({
     minX,
     minY,
-    map->getManagerCoords().deg // TODO fix angle
+    angle
   });
 }
