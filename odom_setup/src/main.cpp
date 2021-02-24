@@ -10,6 +10,7 @@
 // ---- START VEXCODE CONFIGURED DEVICES ----
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
+#include <math.h>
 #include "vex.h"
 #include "Drive.h"
 #include "commands.h"
@@ -38,10 +39,10 @@ ai::jetson  jetson_comms;
 
 #if defined(MANAGER_ROBOT)
 #pragma message("building for the manager")
-ai::robot_link       link( PORT11, "robot_32456_1", linkType::manager );
+ai::robot_link       link( PORT4, "robot_32456_1", linkType::manager ); // TODO change back to PORT4
 #else
 #pragma message("building for the worker")
-ai::robot_link       link( PORT11, "robot_32456_1", linkType::worker );
+ai::robot_link       link( PORT4, "robot_32456_1", linkType::worker );
 #endif
 
 /*---------------------------------------------------------------------------*/
@@ -107,8 +108,6 @@ void updateMapObj() {
   MAP_RECORD mapRecord; // Map from the Jetson
 
   jetson_comms.get_data(&mapRecord);
-
-  link.set_remote_location(mapRecord.pos.x, mapRecord.pos.y, mapRecord.pos.az);
   
   jetson_comms.request_map();
 
@@ -117,8 +116,8 @@ void updateMapObj() {
   BallCoord balls[numBalls];
 
   for (int i = 0; i < numBalls; i++) {
-    float x = (mapRecord.mapobj[i].positionX / -25.4); // hopefully in to the right of (0,0), need to test on field
-    float y = (mapRecord.mapobj[i].positionY / 25.4); // hopefully in above of (0,0), need to test on field
+    float x = (mapRecord.mapobj[i].positionX / -25.4);
+    float y = (mapRecord.mapobj[i].positionY / -25.4);
     balls[i] = {mapRecord.mapobj[i].age, mapRecord.mapobj[i].classID, x, y};
   }
 
@@ -128,23 +127,44 @@ void updateMapObj() {
   RobotCoord robots[2];
   int numRobots = 1;
 
+  float managerHeading = (float) ((-mapRecord.pos.az - M_PI/2) * 360 / (2 * M_PI));
+  float managerX = mapRecord.pos.x / -25.4f + POS_OFFSET * cos(managerHeading * M_PI / 180);
+  float managerY = mapRecord.pos.y / -25.4f + POS_OFFSET * sin(managerHeading * M_PI / 180);
+
+  // robots[0] = {
+  //   0, // manager
+  //   mapRecord.pos.x / -25.4f, // hopefully in to the right of (0,0), need to test on field
+  //   mapRecord.pos.y / -25.4f, // hopefully in above of (0,0), need to test on field
+  //   (float) ((-mapRecord.pos.az - M_PI/2) * 360 / (2 * M_PI)), // starts at +x and increases counterclockwise, range of (-270 : 90)
+  //   24 // 24 in
+  // };
+
   robots[0] = {
     0, // manager
-    mapRecord.pos.x / -25.4f, // hopefully in to the right of (0,0), need to test on field
-    mapRecord.pos.y / 25.4f, // hopefully in above of (0,0), need to test on field
-    (float) ((-mapRecord.pos.az - M_PI/2) * 360 / (2 * M_PI)), // starts at +x and increases counterclockwise, range of (-270 : 90)
+    managerX, // hopefully in to the right of (0,0), need to test on field
+    managerY, // hopefully in above of (0,0), need to test on field
+    managerHeading, // starts at +x and increases counterclockwise, range of (-270 : 90)
     24 // 24 in
   };
+
+  link.set_remote_location(robots[0].x, robots[0].y, robots[0].deg);
 
   if (link.isLinked()) {
     float workerX, workerY, workerHeading;
     link.get_remote_location(workerX, workerY, workerHeading);
 
+    // robots[1] = {
+    //   1, // worker
+    //   workerX / -25.4f, // hopefully in to the right of (0,0), need to test on field
+    //   workerY / -25.4f, // hopefully in above of (0,0), need to test on field
+    //   (float) (270 - ((workerHeading * 360 / (2 * M_PI)))), // hopefully starts at +x and increases counterclockwise, need to test on field
+    //   15 // 15 in
+    // };
     robots[1] = {
       1, // worker
-      workerX / -25.4f, // hopefully in to the right of (0,0), need to test on field
-      workerY / -25.4f, // hopefully in above of (0,0), need to test on field
-      (float) (270 - ((workerHeading * 360 / (2 * M_PI)))), // hopefully starts at +x and increases counterclockwise, need to test on field
+      workerX, // hopefully in to the right of (0,0), need to test on field
+      workerY, // hopefully in above of (0,0), need to test on field
+      workerHeading, // hopefully starts at +x and increases counterclockwise, need to test on field
       15 // 15 in
     };
 
@@ -169,12 +189,12 @@ int main() {
     updateMapObj();
 
     drive->setPose({ 
-        map->getManagerCoords().x, 
-        map->getManagerCoords().y,
-        map->getManagerCoords().deg
+      map->getManagerCoords().x,
+      map->getManagerCoords().y,
+      map->getManagerCoords().deg
     });
 
-    goToNearestBall(0, drive);
+    // goToNearestBall(0, drive);
 
     /*Brain.Screen.clearScreen();
     Brain.Screen.setCursor(2, 1);

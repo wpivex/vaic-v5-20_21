@@ -95,7 +95,7 @@ void drawManagerAndBalls() {
   for(int i = 0; i < map->getNumBalls(); i++) {
     // positionX and positionY have 0,0 in the middle of the field w/ +x right and +y down
     int xCenter = (int) (map->getBallCoords()[i].x / 12 * PX_PER_FT + 119); // in -> px
-    int yCenter = (int) (map->getBallCoords()[i].y / 12 * PX_PER_FT + 119); // in -> px
+    int yCenter = (int) ((-map->getBallCoords()[i].y) / 12 * PX_PER_FT + 119); // in -> px
 
     color ballColor = map->getBallCoords()[i].colorID == 0 ? red : blue;
     Brain.Screen.setPenColor(ballColor); 
@@ -113,14 +113,15 @@ void drawManagerAndBalls() {
   Brain.Screen.setPenColor(black);
 
   int xRobot = (int) (posData.x / 12 * PX_PER_FT + 119); // coords for center of robot
-  int yRobot = (int) (posData.y / 12 * PX_PER_FT + 119);
+  int yRobot = (int) ((-posData.y) / 12 * PX_PER_FT + 119);
   Brain.Screen.drawRectangle(xRobot - 20, yRobot - 20, 40, 40, green); // 24in robot
   
   Brain.Screen.drawLine(
       xRobot, 
       yRobot, 
-      xRobot + (int) (40 * cos(posData.deg * (2 * M_PI / 360))), 
-      yRobot - (int) (40 * sin(posData.deg * (2 * M_PI / 360))));
+      xRobot + (int) (40 * cos(posData.deg * (M_PI / 180))), 
+      yRobot - (int) (40 * sin(posData.deg * (M_PI / 180)))
+  );
 } // drawManagerandBalls()
 
 // Draws map and stats for worker robot as well as general Vex Link data

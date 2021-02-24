@@ -10,6 +10,10 @@
 #ifndef MAP_H_
 #define MAP_H_
 
+// distance from FLIR camera to center of robot, with units of in
+// The position reported from the jetson is the xy location of the FLIR camera
+const float POS_OFFSET = 12; 
+
 typedef struct {
   int32_t age; // number of frames since this ball was last mapped
   int colorID; // 0 = red, 1 = blue, -1 = invalid
