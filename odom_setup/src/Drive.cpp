@@ -27,13 +27,7 @@ void Drive::goTo(Pose newPose){
     double dx = newPose.x - myPose.x;
     double dy = newPose.y - myPose.y;
 
-    FILE *fp = fopen("/dev/serial2", "w");
-
-    fprintf(fp, "%lf - %lf \n", (-atan2(dy, dx) * 180 / 3.14), myPose.theta);
-
-    fclose(fp);
-
-    double turn1 = (-atan2(dy, dx) * 180 / 3.14) - myPose.theta; //Calculate angle to new position, subtract surrent angle to know how much to turn
+    double turn1 = (atan2(dy, dx) * 180 / 3.14) - myPose.theta; //Calculate angle to new position, subtract current angle to know how much to turn
 
     while(turn1 > 180){
       turn1 -= 360;

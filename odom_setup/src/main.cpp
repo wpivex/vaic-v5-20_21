@@ -39,7 +39,7 @@ ai::jetson  jetson_comms;
 
 #if defined(MANAGER_ROBOT)
 #pragma message("building for the manager")
-ai::robot_link       link( PORT4, "robot_32456_1", linkType::manager ); // TODO change back to PORT4
+ai::robot_link       link( PORT4, "robot_32456_1", linkType::manager );
 #else
 #pragma message("building for the worker")
 ai::robot_link       link( PORT4, "robot_32456_1", linkType::worker );
@@ -131,14 +131,6 @@ void updateMapObj() {
   float managerX = mapRecord.pos.x / -25.4f + POS_OFFSET * cos(managerHeading * M_PI / 180);
   float managerY = mapRecord.pos.y / -25.4f + POS_OFFSET * sin(managerHeading * M_PI / 180);
 
-  // robots[0] = {
-  //   0, // manager
-  //   mapRecord.pos.x / -25.4f, // hopefully in to the right of (0,0), need to test on field
-  //   mapRecord.pos.y / -25.4f, // hopefully in above of (0,0), need to test on field
-  //   (float) ((-mapRecord.pos.az - M_PI/2) * 360 / (2 * M_PI)), // starts at +x and increases counterclockwise, range of (-270 : 90)
-  //   24 // 24 in
-  // };
-
   robots[0] = {
     0, // manager
     managerX, // hopefully in to the right of (0,0), need to test on field
@@ -193,8 +185,6 @@ int main() {
       map->getManagerCoords().y,
       map->getManagerCoords().deg
     });
-
-    // goToNearestBall(0, drive);
 
     /*Brain.Screen.clearScreen();
     Brain.Screen.setCursor(2, 1);

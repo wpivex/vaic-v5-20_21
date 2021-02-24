@@ -91,11 +91,15 @@ void drawManagerAndBalls() {
   Brain.Screen.printAt(xText, yText += 90, "x(ft): %.2f  y(ft): %.2f", posData.x / 12, posData.y / 12);
   Brain.Screen.printAt(xText, yText += 15, "heading(deg): %.2f", posData.deg);
 
+//   int tempYText = 200;
+
   // Draw map w/ balls and manager robot
   for(int i = 0; i < map->getNumBalls(); i++) {
     // positionX and positionY have 0,0 in the middle of the field w/ +x right and +y down
     int xCenter = (int) (map->getBallCoords()[i].x / 12 * PX_PER_FT + 119); // in -> px
     int yCenter = (int) ((-map->getBallCoords()[i].y) / 12 * PX_PER_FT + 119); // in -> px
+
+    // Brain.Screen.printAt(260, tempYText += 15, "X:%.2f y:%.2f", map->getBallCoords()[i].x / 12, map->getBallCoords()[i].y / 12);
 
     color ballColor = map->getBallCoords()[i].colorID == 0 ? red : blue;
     Brain.Screen.setPenColor(ballColor); 
