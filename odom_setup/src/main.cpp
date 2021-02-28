@@ -176,7 +176,15 @@ int main() {
   Competition.autonomous(autonomousMain); // Set up callbacks for autonomous and driver control periods.
     
   Drive* drive = new Drive();
+  //drive->goTo(Pose{10,0,0});
 
+  State robotState = startup;
+
+  //drive->foldIntakes(false);
+
+  drive->getBall({24,0,0});
+  drive->goTo({34,-22,-45});
+  scoreAllBalls();
   while(1) {
     updateMapObj();
 
@@ -185,21 +193,32 @@ int main() {
       map->getManagerCoords().y,
       map->getManagerCoords().deg
     });
-
-    /*Brain.Screen.clearScreen();
-    Brain.Screen.setCursor(2, 1);
-    Brain.Screen.print("Drive theta:");
-    Brain.Screen.print(drive->getPose().theta);*/
-
-    /*
-    Brain.Screen.clearScreen();
-    Brain.Screen.setCursor(2, 1);
-    Brain.Screen.print("Left Encoder:");
-    Brain.Screen.print(leftInches());
-    Brain.Screen.print(" Right Encoder:");
-    Brain.Screen.print(rightInches());
-
-    yeet.spin(directionType::fwd,100,percentUnits::pct);*/
+    /*switch (robotState)
+    {
+      case startup:
+        //Any intialization
+        robotState = lookForBalls;
+        break;
+      case lookForBalls:
+        //Find balls
+        if(map->hasBall(0))//if balls of color red are present
+        {
+          robotState = collectingBalls;//collectingBalls;
+        }else{
+          drive->turnDegrees(20);
+        }
+        break;
+      case collectingBalls:
+        //goToNearestBall(0,drive);
+        drive->turnDegrees(-30);
+        robotState = scoreBalls;
+        break;
+      case scoreBalls:
+        //Score in goal
+        goToNearestGoal(drive);
+        //scoreAllBalls();
+        break;
+    }*/
 
     this_thread::sleep_for(loop_time); // Allow other tasks to run
   }

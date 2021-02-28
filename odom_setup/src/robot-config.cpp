@@ -16,10 +16,10 @@ motor rightMotorB = motor(PORT10, ratio18_1, true);
 motor rightMotorC = motor(PORT11, ratio18_1, false);
 motor_group RightDriveSmart = motor_group(rightMotorA, rightMotorB, rightMotorC);
 
-motor leftIntake = motor(PORT11, ratio6_1, true);
-motor rightIntake = motor(PORT20, ratio6_1, true);
+motor leftIntake = motor(PORT12, ratio18_1, true);
+motor rightIntake = motor(PORT20, ratio18_1, true);
 
-motor yeet = motor(PORT5, ratio6_1,true);
+motor yeet = motor(PORT5, ratio6_1,false);
 motor rollerBack = motor(PORT19, ratio6_1, true);
 
 encoder encl = encoder(Brain.ThreeWirePort.C);

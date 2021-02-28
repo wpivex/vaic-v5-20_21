@@ -35,6 +35,7 @@ class Map {
 
     BallCoord* getBallCoords(void);
     int getNumBalls(void);
+    bool hasBall(int);
     RobotCoord getManagerCoords(void);
     RobotCoord getWorkerCoords(void);
     RobotCoord* getEnemyCoords(void);

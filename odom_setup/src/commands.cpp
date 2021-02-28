@@ -88,3 +88,18 @@ void goToNearestGoal(Drive* drive) {
     angle
   });
 }
+
+void scoreAllBalls()
+{
+  leftIntake.spin(directionType::fwd, 100, percentUnits::pct);
+  rightIntake.spin(directionType::fwd, 100, percentUnits::pct);
+  rollerBack.spin(directionType::fwd, 100, percentUnits::pct);
+  yeet.spin(directionType::fwd, 100, percentUnits::pct);
+  //Wait 2 seconds for now
+  this_thread::sleep_for(2000);
+
+  leftIntake.stop();
+  rightIntake.stop();
+  rollerBack.stop();
+  yeet.stop();
+}

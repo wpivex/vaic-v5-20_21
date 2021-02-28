@@ -4,6 +4,8 @@
 
 using namespace vex;
 
+enum State{startup,lookForBalls,collectingBalls,scoreBalls};
+
 extern brain Brain;
 //Motors and motorgroups to be used in other classes
 extern motor_group LeftDriveSmart;
@@ -26,6 +28,7 @@ double leftInches();
 double rightInches();
 double velocityLeft();
 double velocityRight();
+
 /**
  * Used to initialize code/tasks/devices added using tools in VEXcode Pro.
  *

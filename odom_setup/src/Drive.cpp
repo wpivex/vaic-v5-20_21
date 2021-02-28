@@ -6,13 +6,15 @@ using namespace vex;
 
 const double MAX_DRIVE_PERCENTAGE = 25;
 const double MIN_DRIVE_PERCENTAGE = 2;
-const double Kpstraight = 4; //We probably want a seperate Kp value for turning but its good enough for now. What we really need is better encoder wheel mounting points
-const double Kpturn = 2;
+const double MIN_DRIVE_PERCENTAGE_TURN = 10;
+const double Kpstraight = 3.5; //We probably want a seperate Kp value for turning but its good enough for now. What we really need is better encoder wheel mounting points
+const double Kpturn = 2.5;
 
 Drive::Drive() {
    myPose.x = 0.0;
    myPose.y = 0.0;
    myPose.theta = 0.0;
+   intakesDeployed = false;
 }
 
 void Drive::setPose(Pose newPose){
@@ -38,14 +40,47 @@ void Drive::goTo(Pose newPose){
     turnDegrees(turn1); //Heading is updated within this function
 
     double dist = sqrt(dx * dx + dy * dy);
-    driveDistance(dist); //Position is updated within this function
+    driveDistance(dist, false); //Position is updated within this function
+  }
+
+  turnDegrees(newPose.theta-myPose.theta); //Heading is updated within this function
+}
+
+void Drive::getBall(Pose newPose){
+  if( std::abs(newPose.x - myPose.x) > .5 || std::abs(newPose.y - myPose.y) > .5 )
+  {
+    double dx = newPose.x - myPose.x;
+    double dy = newPose.y - myPose.y;
+
+    double turn1 = (atan2(dy, dx) * 180 / 3.14) - myPose.theta; //Calculate angle to new position, subtract current angle to know how much to turn
+
+    while(turn1 > 180){
+      turn1 -= 360;
+    }
+    while(turn1 < -180){
+      turn1 += 360;
+    }
+    turnDegrees(turn1); //Heading is updated within this function
+
+    //Stop 6 inches early
+    double dist = sqrt(dx * dx + dy * dy) - 6;
+    driveDistance(dist,false); //Position is updated within this function
+
+    //Go grab it!
+    foldIntakes(true);
+    driveDistance(12,true); //Position is updated within this function
+    
+    driveDistance(-6,false);
   }
 
   turnDegrees(newPose.theta-myPose.theta); //Heading is updated within this function
 }
 
 void Drive::turnDegrees(double angle){
-  double IN_PER_90 = 1.0; //What value the encoder reads for a 90 degree turn
+  int timeout = ((std::abs(angle)/10)+2)*1000;
+  int maxTime = vex::timer::system()+timeout;//This is the maximum duration to try to turn before giving up
+
+  double IN_PER_90 = 11; //What value the encoder reads for a 90 degree turn
 
   double targetL = leftInches() - IN_PER_90 * angle / 90.0;
   double targetR = rightInches() + IN_PER_90 * angle / 90.0;
@@ -68,7 +103,7 @@ void Drive::turnDegrees(double angle){
     LeftDriveSmart.spin(directionType::rev, driveValue, percentUnits::pct);
     RightDriveSmart.spin(directionType::fwd, driveValue, percentUnits::pct);
 
-  } while(std::abs(error) > .025 || velocityLeft() > 2 || velocityRight() > 2);
+  } while((std::abs(error) > .025 || velocityLeft() > 2 || velocityRight() > 2) && vex::timer::system()<maxTime);
 
   LeftDriveSmart.stop();
   RightDriveSmart.stop();
@@ -76,7 +111,10 @@ void Drive::turnDegrees(double angle){
   myPose.theta = myPose.theta + angle;
 }
 
-void Drive::driveDistance(double inches){
+void Drive::driveDistance(double inches, bool intaking){
+  int timeout = (std::abs(inches)/10+2)*1000;
+  int maxTime = vex::timer::system()+timeout;//This is the maximum duration to try to turn before giving up
+
   double targetL = leftInches() + inches;
   double targetR = rightInches() + inches;
 
@@ -105,12 +143,17 @@ void Drive::driveDistance(double inches){
     LeftDriveSmart.spin(directionType::fwd, driveValue, percentUnits::pct);
     RightDriveSmart.spin(directionType::fwd, driveValue, percentUnits::pct);
 
+    if(intaking)
+    {
+      leftIntake.spin(directionType::fwd, 100, percentUnits::pct);
+      rightIntake.spin(directionType::fwd, 100, percentUnits::pct);
+    }
 
-    leftIntake.spin(directionType::fwd, 100, percentUnits::pct);
-    rightIntake.spin(directionType::fwd, 100, percentUnits::pct);
+  } while((std::abs(error) > .5 || velocityLeft() > 2 || velocityRight() > 2) && vex::timer::system()<maxTime);
 
-  } while(std::abs(error) > .5 || velocityLeft() > 2 || velocityRight() > 2);
-
+  leftIntake.stop();
+  rightIntake.stop();
+  
   LeftDriveSmart.stop();
   RightDriveSmart.stop();
 
@@ -124,4 +167,24 @@ void Drive::driveDistance(double inches){
 
 Pose Drive::getPose(){
   return myPose;
+}
+
+void Drive::foldIntakes(bool foldout){
+  if(foldout == intakesDeployed)
+    //Intakes are already in the correct position
+    return;
+
+  if(foldout)
+  {
+    leftIntake.spin(directionType::fwd, 100, percentUnits::pct);
+    rightIntake.spin(directionType::rev, 100, percentUnits::pct);
+  }else{
+    leftIntake.spin(directionType::rev, 100, percentUnits::pct);
+    rightIntake.spin(directionType::fwd, 100, percentUnits::pct);
+  }
+
+  this_thread::sleep_for(500);
+
+  leftIntake.stop();
+  rightIntake.stop();
 }

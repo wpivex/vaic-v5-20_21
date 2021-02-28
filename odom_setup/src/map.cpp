@@ -21,6 +21,15 @@ int Map::getNumBalls(void) {
   return numBalls;
 }
 
+bool Map::hasBall(int id){
+  for(int i = 0; i<MAX_BALLS;i++)
+  {
+    if(id==balls[i].colorID)
+      return true;
+  }
+  return false;
+}
+
 RobotCoord Map::getManagerCoords(void) {
   return manager;
 }

@@ -18,5 +18,6 @@ const float GOAL_RADIUS = 11.29 / 2;
 float getDistanceToCoord(Drive* drive, BallCoord* ball);
 void goToNearestBall(int colorID, Drive* drive);
 void goToNearestGoal(Drive* drive);
+void scoreAllBalls();
 
 #endif
