@@ -13,6 +13,71 @@
 using namespace vex;
 using namespace ai;
 
+/*
+ * Updates the global Map obj declared in vex.h with data from the Jetson and vex link
+ */
+void updateMapObj() {
+  MAP_RECORD mapRecord; // Map from the Jetson
+
+  jetson_comms.get_data(&mapRecord);
+  
+  jetson_comms.request_map();
+
+  // get ball data from mapRecord
+  int numBalls = mapRecord.mapnum;
+  BallCoord balls[numBalls];
+
+  for (int i = 0; i < numBalls; i++) {
+    float x = (mapRecord.mapobj[i].positionX / -25.4);
+    float y = (mapRecord.mapobj[i].positionY / -25.4);
+    balls[i] = {mapRecord.mapobj[i].age, mapRecord.mapobj[i].classID, x, y};
+  }
+
+  map->setBallCoords(balls, numBalls);
+
+  // get manager robot data from mapRecord and worker data from vex link coords
+  RobotCoord robots[2];
+  int numRobots = 1;
+
+  float managerHeading = (float) ((-mapRecord.pos.az - M_PI/2) * 360 / (2 * M_PI));
+  float managerX = mapRecord.pos.x / -25.4f + POS_OFFSET * cos(managerHeading * M_PI / 180);
+  float managerY = mapRecord.pos.y / -25.4f + POS_OFFSET * sin(managerHeading * M_PI / 180);
+
+  robots[0] = {
+    0, // manager
+    managerX, // hopefully in to the right of (0,0), need to test on field
+    managerY, // hopefully in above of (0,0), need to test on field
+    managerHeading, // starts at +x and increases counterclockwise, range of (-270 : 90)
+    24 // 24 in
+  };
+
+  link.set_remote_location(robots[0].x, robots[0].y, robots[0].deg);
+
+  if (link.isLinked()) {
+    float workerX, workerY, workerHeading;
+    link.get_remote_location(workerX, workerY, workerHeading);
+
+    // robots[1] = {
+    //   1, // worker
+    //   workerX / -25.4f, // hopefully in to the right of (0,0), need to test on field
+    //   workerY / -25.4f, // hopefully in above of (0,0), need to test on field
+    //   (float) (270 - ((workerHeading * 360 / (2 * M_PI)))), // hopefully starts at +x and increases counterclockwise, need to test on field
+    //   15 // 15 in
+    // };
+    robots[1] = {
+      1, // worker
+      workerX, // hopefully in to the right of (0,0), need to test on field
+      workerY, // hopefully in above of (0,0), need to test on field
+      workerHeading, // hopefully starts at +x and increases counterclockwise, need to test on field
+      15 // 15 in
+    };
+
+    numRobots++;
+  }
+
+  map->setRobotCoords(robots, numRobots);
+} // updateMapObj()
+
 BallCoord* Map::getBallCoords(void) {
   return balls;
 }

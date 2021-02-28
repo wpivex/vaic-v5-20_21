@@ -4,17 +4,10 @@
 
 using namespace vex;
 
-const double MAX_DRIVE_PERCENTAGE = 25;
-const double MIN_DRIVE_PERCENTAGE = 2;
-const double MIN_DRIVE_PERCENTAGE_TURN = 10;
-const double Kpstraight = 3.5; //We probably want a seperate Kp value for turning but its good enough for now. What we really need is better encoder wheel mounting points
-const double Kpturn = 2.5;
-
 Drive::Drive() {
    myPose.x = 0.0;
    myPose.y = 0.0;
    myPose.theta = 0.0;
-   intakesDeployed = false;
 }
 
 void Drive::setPose(Pose newPose){
@@ -43,7 +36,16 @@ void Drive::goTo(Pose newPose){
     driveDistance(dist, false); //Position is updated within this function
   }
 
-  turnDegrees(newPose.theta-myPose.theta); //Heading is updated within this function
+  double turn2 = newPose.theta - myPose.theta;
+
+  while(turn2 > 180){
+    turn2 -= 360;
+  }
+  while(turn2 < -180){
+    turn2 += 360;
+  }
+
+  turnDegrees(turn2); //Heading is updated within this function
 }
 
 void Drive::getBall(Pose newPose){
@@ -62,22 +64,23 @@ void Drive::getBall(Pose newPose){
     }
     turnDegrees(turn1); //Heading is updated within this function
 
-    //Stop 6 inches early
-    double dist = sqrt(dx * dx + dy * dy) - 6;
+    //Stop 6 inches late
+    double dist = sqrt(dx * dx + dy * dy) + 6;
     driveDistance(dist,false); //Position is updated within this function
 
     //Go grab it!
     foldIntakes(true);
-    driveDistance(12,true); //Position is updated within this function
+    driveDistance(12, true); //Position is updated within this function
     
-    driveDistance(-6,false);
+    driveDistance(-12, false);
   }
 
-  turnDegrees(newPose.theta-myPose.theta); //Heading is updated within this function
+  // turnDegrees(newPose.theta-myPose.theta); //Heading is updated within this function
+  foldIntakes(false);
 }
 
 void Drive::turnDegrees(double angle){
-  int timeout = ((std::abs(angle)/10)+2)*1000;
+  int timeout = ((std::abs(angle) / 10) + 2) * 1000;
   int maxTime = vex::timer::system()+timeout;//This is the maximum duration to try to turn before giving up
 
   double IN_PER_90 = 11; //What value the encoder reads for a 90 degree turn
@@ -91,6 +94,8 @@ void Drive::turnDegrees(double angle){
   double error;
   do
   {
+    updateMapObj();
+
     leftError = -targetL + leftInches();
     rightError = targetR - rightInches();
     error = (leftError + rightError) / 2;
@@ -113,13 +118,13 @@ void Drive::turnDegrees(double angle){
 
 void Drive::driveDistance(double inches, bool intaking){
   int timeout = (std::abs(inches)/10+2)*1000;
-  int maxTime = vex::timer::system()+timeout;//This is the maximum duration to try to turn before giving up
+  int maxTime = vex::timer::system() + timeout;//This is the maximum duration to try to turn before giving up
 
   double targetL = leftInches() + inches;
   double targetR = rightInches() + inches;
 
   //Temporary code for smooth-ish acceleration
-  for(int i = MIN_DRIVE_PERCENTAGE; i < MAX_DRIVE_PERCENTAGE;i++)
+  for(int i = MIN_DRIVE_PERCENTAGE; i < MAX_DRIVE_PERCENTAGE; i++)
   {
     LeftDriveSmart.spin(directionType::fwd, i, percentUnits::pct);
     RightDriveSmart.spin(directionType::fwd, i, percentUnits::pct);
@@ -132,6 +137,8 @@ void Drive::driveDistance(double inches, bool intaking){
   double error;
   do
   {
+    updateMapObj();
+
     leftError = targetL - leftInches();
     rightError = targetR - rightInches();
     error = (leftError + rightError) / 2;
@@ -169,11 +176,7 @@ Pose Drive::getPose(){
   return myPose;
 }
 
-void Drive::foldIntakes(bool foldout){
-  if(foldout == intakesDeployed)
-    //Intakes are already in the correct position
-    return;
-
+void Drive::foldIntakes(bool foldout) {
   if(foldout)
   {
     leftIntake.spin(directionType::fwd, 100, percentUnits::pct);

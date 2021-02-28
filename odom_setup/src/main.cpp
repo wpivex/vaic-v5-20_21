@@ -14,6 +14,7 @@
 #include "vex.h"
 #include "Drive.h"
 #include "commands.h"
+#include <vex_units.h>
 
 using namespace vex;
 
@@ -101,90 +102,19 @@ void autonomousMain(void) {
   firstAutoFlag = false;
 }
 
-/*
- * Updates the global Map obj declared in vex.h with data from the Jetson and vex link
- */
-void updateMapObj() {
-  MAP_RECORD mapRecord; // Map from the Jetson
-
-  jetson_comms.get_data(&mapRecord);
-  
-  jetson_comms.request_map();
-
-  // get ball data from mapRecord
-  int numBalls = mapRecord.mapnum;
-  BallCoord balls[numBalls];
-
-  for (int i = 0; i < numBalls; i++) {
-    float x = (mapRecord.mapobj[i].positionX / -25.4);
-    float y = (mapRecord.mapobj[i].positionY / -25.4);
-    balls[i] = {mapRecord.mapobj[i].age, mapRecord.mapobj[i].classID, x, y};
-  }
-
-  map->setBallCoords(balls, numBalls);
-
-  // get manager robot data from mapRecord and worker data from vex link coords
-  RobotCoord robots[2];
-  int numRobots = 1;
-
-  float managerHeading = (float) ((-mapRecord.pos.az - M_PI/2) * 360 / (2 * M_PI));
-  float managerX = mapRecord.pos.x / -25.4f + POS_OFFSET * cos(managerHeading * M_PI / 180);
-  float managerY = mapRecord.pos.y / -25.4f + POS_OFFSET * sin(managerHeading * M_PI / 180);
-
-  robots[0] = {
-    0, // manager
-    managerX, // hopefully in to the right of (0,0), need to test on field
-    managerY, // hopefully in above of (0,0), need to test on field
-    managerHeading, // starts at +x and increases counterclockwise, range of (-270 : 90)
-    24 // 24 in
-  };
-
-  link.set_remote_location(robots[0].x, robots[0].y, robots[0].deg);
-
-  if (link.isLinked()) {
-    float workerX, workerY, workerHeading;
-    link.get_remote_location(workerX, workerY, workerHeading);
-
-    // robots[1] = {
-    //   1, // worker
-    //   workerX / -25.4f, // hopefully in to the right of (0,0), need to test on field
-    //   workerY / -25.4f, // hopefully in above of (0,0), need to test on field
-    //   (float) (270 - ((workerHeading * 360 / (2 * M_PI)))), // hopefully starts at +x and increases counterclockwise, need to test on field
-    //   15 // 15 in
-    // };
-    robots[1] = {
-      1, // worker
-      workerX, // hopefully in to the right of (0,0), need to test on field
-      workerY, // hopefully in above of (0,0), need to test on field
-      workerHeading, // hopefully starts at +x and increases counterclockwise, need to test on field
-      15 // 15 in
-    };
-
-    numRobots++;
-  }
-
-  map->setRobotCoords(robots, numRobots);
-} // updateMapObj()
-
 int main() {
   vexcodeInit(); // Initializing Robot Configuration. DO NOT REMOVE!
 
-  int32_t loop_time = 66; // Run at about 15Hz
+  int32_t loop_time = 33; // Run at about 15Hz
 
   thread t1 = thread(dashboardTask); // start the status update display
 
   Competition.autonomous(autonomousMain); // Set up callbacks for autonomous and driver control periods.
     
   Drive* drive = new Drive();
-  //drive->goTo(Pose{10,0,0});
 
   State robotState = startup;
 
-  //drive->foldIntakes(false);
-
-  drive->getBall({24,0,0});
-  drive->goTo({34,-22,-45});
-  scoreAllBalls();
   while(1) {
     updateMapObj();
 
@@ -193,32 +123,42 @@ int main() {
       map->getManagerCoords().y,
       map->getManagerCoords().deg
     });
-    /*switch (robotState)
+
+    // FILE *fp = fopen("/dev/serial2", "w");
+
+    // fprintf(fp, "%d\n", (map->hasBall(0)));
+
+    // fclose(fp);
+
+    switch (robotState)
     {
       case startup:
-        //Any intialization
+        drive->foldIntakes(false);
         robotState = lookForBalls;
         break;
       case lookForBalls:
         //Find balls
         if(map->hasBall(0))//if balls of color red are present
         {
+          LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
+          RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
           robotState = collectingBalls;//collectingBalls;
-        }else{
-          drive->turnDegrees(20);
+        } else {
+          LeftDriveSmart.spin(directionType::rev, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
+          RightDriveSmart.spin(directionType::fwd, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
         }
         break;
       case collectingBalls:
-        //goToNearestBall(0,drive);
-        drive->turnDegrees(-30);
+        goToNearestBall(0, drive);
         robotState = scoreBalls;
         break;
       case scoreBalls:
         //Score in goal
         goToNearestGoal(drive);
-        //scoreAllBalls();
+        scoreAllBalls();
+        robotState = done;
         break;
-    }*/
+    }
 
     this_thread::sleep_for(loop_time); // Allow other tasks to run
   }

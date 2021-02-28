@@ -29,6 +29,8 @@ typedef struct {
   int size; // width in in, 15 or 24 (or -1 if unknown for enemy bots)
 } RobotCoord;
 
+void updateMapObj(void);
+
 class Map {
   public:
     const static int MAX_BALLS = 36, MAX_ENEMIES = 2;

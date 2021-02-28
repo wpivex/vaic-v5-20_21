@@ -13,7 +13,7 @@
 #include "Drive.h"
 
 const float FIELD_LENGTH_IN = 11.7 * 12;
-const float GOAL_RADIUS = 11.29 / 2;
+const float GOAL_DIAMETER = 12; // actual: 11.29
 
 float getDistanceToCoord(Drive* drive, BallCoord* ball);
 void goToNearestBall(int colorID, Drive* drive);

@@ -44,7 +44,7 @@ void goToNearestBall(int desiredColor, Drive* drive) {
   }
 
   if (minDistance != -1) {
-      drive->goTo({
+      drive->getBall({
         nearestBall->x,
         nearestBall->y,
         map->getManagerCoords().deg
@@ -65,8 +65,8 @@ void goToNearestGoal(Drive* drive) {
 
   for (int xGoal = 0; xGoal < 3; xGoal++) { // lower numbers are to the left
     for (int yGoal = 0; yGoal < 3; yGoal++) { // lower numbers are towards the top
-      float xCenter = (xGoal - 1) * (FIELD_LENGTH_IN) + (1 - xGoal) * GOAL_RADIUS;
-      float yCenter = (yGoal - 1) * (FIELD_LENGTH_IN) + (1 - yGoal) * GOAL_RADIUS;
+      float xCenter = (xGoal - 1) * (FIELD_LENGTH_IN / 2) + (1 - xGoal) * (GOAL_DIAMETER + 12);
+      float yCenter = (yGoal - 1) * (FIELD_LENGTH_IN / 2) + (1 - yGoal) * (GOAL_DIAMETER + 12);
       float distance = getDistanceToCoord(drive, xCenter, yCenter);
 
       if (minDistance == -1 || minDistance > distance) {
@@ -77,10 +77,17 @@ void goToNearestGoal(Drive* drive) {
     }
   }
 
-  // hard code for the only goal we have setup rn, in the bottom right.
-  minX = (2 - 1) * (FIELD_LENGTH_IN) + (1 - 2) * GOAL_RADIUS;
-  minY = (2 - 1) * (FIELD_LENGTH_IN) + (1 - 2) * GOAL_RADIUS;
-  angle = -45;
+  // hard code for the only goal we have setup rn, in the middle right.
+  minX = (2 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 2) * (GOAL_DIAMETER + 12);
+  minY = (1 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 1) * (GOAL_DIAMETER + 12);
+
+  // FILE *fp = fopen("/dev/serial2", "w");
+
+  // fprintf(fp, "%.2f %.2f\n", minX, minY);
+
+  // fclose(fp);
+
+  angle = 0;
 
   drive->goTo({
     minX,
