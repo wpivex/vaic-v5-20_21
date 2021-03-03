@@ -56,15 +56,13 @@ void getNearestBall(int colorID, Drive* drive) {
     drive->turnDegrees(angleToBall);
 
     // drive to ball
-      // get distance from camera
-      // double dist = ;
-      // driveDistance(dist, false);
+    // drive->driveDistance(minDistance, true);
 
     // pickup ball
-      // foldIntakes(true);
-      // driveDistance(12, true); //Position is updated within this function
-      // driveDistance(-12, false);
-      // foldIntakes(false);
+    // foldIntakes(true);
+    // driveDistance(12, true);
+    // driveDistance(-12, false);
+    // foldIntakes(false);
   } else {
     FILE *fp = fopen("/dev/serial2", "w");
 
