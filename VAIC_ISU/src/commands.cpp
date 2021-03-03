@@ -25,9 +25,6 @@ float getDistanceToCoord(float x, float y) {
 // Uses box objects from the camera to turn to, drive over, and pickup the nearest ball of a given color.
 // colorID should be 0 for red and 1 for blue, should never be 2 (for goals)
 void getNearestBall(int colorID) {
-  // TODO make drive object global and remove parameter from above
-  drive->foldIntakes(false);
-
   // Find the box obj corresponding to the nearest ball, comparing by depth from the box objects
   MAP_RECORD mapRecord;
   jetson_comms.get_data(&mapRecord);
@@ -50,10 +47,10 @@ void getNearestBall(int colorID) {
   }
 
   if (minDistance != -1) {
+    drive->foldIntakes(false);
+
     // turn to ball
-    float ballPixel = (nearestBall.x - REALSENSE_HORZ_PIXELS / 2.0); // center of ball obj
-    float angleToBall = ballPixel * REALSENSE_HORZ_FOV / REALSENSE_HORZ_PIXELS;
-    drive->turnDegrees(angleToBall);
+    drive->turnToBall(minDistance, colorID);
 
     // drive to ball
     // drive->driveDistance(minDistance, true);
@@ -101,12 +98,6 @@ void goToNearestGoal() {
   minX = (2 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 2) * (GOAL_DIAMETER + 12);
   minY = (1 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 1) * (GOAL_DIAMETER + 12);
 
-  // FILE *fp = fopen("/dev/serial2", "w");
-
-  // fprintf(fp, "%.2f %.2f\n", minX, minY);
-
-  // fclose(fp);
-
   angle = 0;
 
   drive->goTo({
@@ -116,8 +107,7 @@ void goToNearestGoal() {
   });
 }
 
-void scoreAllBalls()
-{
+void scoreAllBalls() {
   leftIntake.spin(directionType::fwd, 100, percentUnits::pct);
   rightIntake.spin(directionType::fwd, 100, percentUnits::pct);
   rollerBack.spin(directionType::fwd, 100, percentUnits::pct);

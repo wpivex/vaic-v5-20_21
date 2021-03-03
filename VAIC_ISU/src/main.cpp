@@ -12,9 +12,9 @@
 
 #include <math.h>
 #include "vex.h"
+#include <vex_units.h>
 #include "Drive.h"
 #include "commands.h"
-#include <vex_units.h>
 
 using namespace vex;
 
@@ -112,6 +112,8 @@ int main() {
 
   State robotState = startup;
 
+  FILE *fp = fopen("/dev/serial2", "w");
+
   while(1) {
     updateMapObj();
 
@@ -121,10 +123,13 @@ int main() {
       map->getManagerCoords().deg
     });
 
-    switch (robotState)
-    {
+    switch (robotState) {
       case startup:
         robotState = lookForBalls;
+
+        fprintf(fp, "%d\n", robotState);
+        fflush(fp);
+
         break;
       case lookForBalls:
         //Find balls
@@ -132,25 +137,36 @@ int main() {
         {
           LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
           RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
-          robotState = collectingBalls;//collectingBalls;
+          robotState = collectingBalls;
+
+          fprintf(fp, "%d\n", robotState);
+          fflush(fp);
         } else {
-          LeftDriveSmart.spin(directionType::rev, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
-          RightDriveSmart.spin(directionType::fwd, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
+          // LeftDriveSmart.spin(directionType::rev, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
+          // RightDriveSmart.spin(directionType::fwd, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
         }
         break;
       case collectingBalls:
         getNearestBall(0); // red ball
-        robotState = lookForBalls;
+        robotState = done;
         // robotState = scoreBalls;
+
+        fprintf(fp, "%d\n", robotState);
+        fflush(fp);
         break;
       case scoreBalls:
         //Score in goal
         goToNearestGoal();
         scoreAllBalls();
         robotState = done;
+
+        fprintf(fp, "%d\n", robotState);
+        fflush(fp);
         break;
     }
 
     this_thread::sleep_for(loop_time); // Allow other tasks to run
   }
+
+  fclose(fp);
 }

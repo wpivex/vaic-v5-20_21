@@ -48,6 +48,52 @@ void Drive::goTo(Pose newPose) {
   turnDegrees(turn2); //Heading is updated within this function
 }
 
+// Turns to the desired ball given by the depth from the camera (in inches) and color
+// These two parameters should be able to have the camera track the same ball while 
+// turning, even if other balls come into view
+void Drive::turnToBall(float desiredDepth, int colorID) {
+  MAP_RECORD mapRecord;
+  int error, xPixel, prevXPixel;
+  int sumError = 0;
+  float minDiffDepth, output;
+
+  do {
+    jetson_comms.get_data(&mapRecord);
+    jetson_comms.request_map();
+
+    prevXPixel = xPixel;
+
+    minDiffDepth = 100;
+
+    for (int i = 0; i < mapRecord.boxnum; i++) {
+      float diffDepth = std::abs(mapRecord.boxobj[i].depth / 25.4 - desiredDepth);
+
+      // check if colors match and the ball's depth is the closest match to what the depth was
+      // before this method was called, from desiredDepth
+      if (mapRecord.boxobj[i].classID == colorID && diffDepth < minDiffDepth) {
+        xPixel = mapRecord.boxobj[i].x;
+        minDiffDepth = diffDepth;
+      }
+    }
+
+    error = BALL_TURN_SETPOINT - xPixel;
+
+    if (abs(error) < BALL_TURN_KI_THRESHOLD)
+      sumError += error;
+
+    output = error * BALL_TURN_KP + sumError * BALL_TURN_KI;
+
+    LeftDriveSmart.spin(directionType::rev, output, percentUnits::pct);
+    RightDriveSmart.spin(directionType::fwd, output, percentUnits::pct);
+
+    this_thread::sleep_for(10);
+
+  } while (abs(error) >= BALL_TURN_MAX_ERROR || abs(xPixel - prevXPixel) >= BALL_TURN_MAX_OUTPUT);
+
+  LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
+  RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
+}
+
 void Drive::turnDegrees(double angle) { 
   int timeout = ((std::abs(angle) / 10) + 2) * 1000; // 2 seconds + angle * 1s / 10 deg
   int maxTime = vex::timer::system() + timeout; // This is the maximum duration to try to turn before giving up
