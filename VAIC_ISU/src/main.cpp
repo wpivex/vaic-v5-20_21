@@ -142,8 +142,8 @@ int main() {
           fprintf(fp, "%d\n", robotState);
           fflush(fp);
         } else {
-          // LeftDriveSmart.spin(directionType::rev, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
-          // RightDriveSmart.spin(directionType::fwd, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
+          LeftDriveSmart.spin(directionType::rev, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
+          RightDriveSmart.spin(directionType::fwd, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
         }
         break;
       case collectingBalls:
