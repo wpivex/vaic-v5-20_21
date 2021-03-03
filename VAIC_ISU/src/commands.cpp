@@ -15,40 +15,62 @@
  * using normal xy plane conventions with the origin at the center of the field.
  * Assumes the robot is at drive's current pose
  */
-float getDistanceToCoord(Drive* drive, float x, float y) {
+float getDistanceToCoord(float x, float y, Drive* drive) {
   float xDiff = drive->getPose().x - x;
   float yDiff = drive->getPose().y - y;
 
   return sqrt(xDiff * xDiff + yDiff * yDiff);
 }
 
-/*
- * Goes to the nearest ball of the desired color using the given drive object.
- * 0 corresponds to a red ball and 1 corresponds to a blue ball.
- */
-void goToNearestBall(int desiredColor, Drive* drive) {
+// Uses box objects from the camera to turn to, drive over, and pickup the nearest ball of a given color.
+// colorID should be 0 for red and 1 for blue, should never be 2 (for goals)
+void getNearestBall(int colorID, Drive* drive) {
   // TODO make drive object global and remove parameter from above
-  BallCoord* nearestBall;
+  drive->foldIntakes(false);
+
+  // Find the box obj corresponding to the nearest ball, comparing by depth from the box objects
+  MAP_RECORD mapRecord;
+  jetson_comms.get_data(&mapRecord);
+  jetson_comms.request_map();
+
+  fifo_object_box nearestBall;
   float minDistance = -1;
 
-  for (int i = 0; i < map->getNumBalls(); i++) {
-    BallCoord* ball = &map->getBallCoords()[i];
-    float distance = getDistanceToCoord(drive, ball->x, ball->y);
+  for (int i = 0; i < mapRecord.boxnum; i++) {
+    fifo_object_box box = mapRecord.boxobj[i];
 
-    if (ball->colorID == desiredColor) {
+    if (box.classID == colorID) {
+      float distance = box.depth / 25.4; // depth of object in inches
+
       if (minDistance == -1 || minDistance > distance) {
-        nearestBall = ball;
+        nearestBall = box;
         minDistance = distance;
       }
     }
   }
 
   if (minDistance != -1) {
-      drive->getBall({
-        nearestBall->x,
-        nearestBall->y,
-        map->getManagerCoords().deg
-    });
+    // turn to ball
+    float ballPixel = (nearestBall.x - REALSENSE_HORZ_PIXELS / 2.0); // center of ball obj
+    float angleToBall = ballPixel * REALSENSE_HORZ_FOV / REALSENSE_HORZ_PIXELS;
+    drive->turnDegrees(angleToBall);
+
+    // drive to ball
+      // get distance from camera
+      // double dist = ;
+      // driveDistance(dist, false);
+
+    // pickup ball
+      // foldIntakes(true);
+      // driveDistance(12, true); //Position is updated within this function
+      // driveDistance(-12, false);
+      // foldIntakes(false);
+  } else {
+    FILE *fp = fopen("/dev/serial2", "w");
+
+    fprintf(fp, "No balls of colorID %d were found.\n", colorID);
+
+    fclose(fp);
   }
 }
 

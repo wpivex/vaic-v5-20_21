@@ -23,9 +23,7 @@ competition Competition;
 
 Map* map = new Map();
 
-// create instance of jetson class to receive location and other
-// data from the Jetson nano
-//
+// create instance of jetson class to receive location and other data from the Jetson nano
 ai::jetson  jetson_comms;
 
 /*----------------------------------------------------------------------------*/
@@ -123,12 +121,6 @@ int main() {
       map->getManagerCoords().y,
       map->getManagerCoords().deg
     });
-
-    // FILE *fp = fopen("/dev/serial2", "w");
-
-    // fprintf(fp, "%d\n", (map->hasBall(0)));
-
-    // fclose(fp);
 
     switch (robotState)
     {

@@ -18,7 +18,6 @@ class Drive {
 		
     void setPose(Pose newPose);
     void goTo(Pose newPose);
-    void getBall(Pose newPose);
 
     void driveDistance(double inches, bool intaking);
     void turnDegrees(double angle);
