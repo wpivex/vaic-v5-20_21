@@ -19,9 +19,9 @@
 
 #include "ai_jetson.h"
 #include "ai_robot_link.h"
-
 #include "robot-config.h"
 #include "map.h"
+#include "Drive.h"
 
 #define waitUntil(condition)                                                   \
   do {                                                                         \
@@ -37,5 +37,6 @@ extern ai::robot_link  link;
 extern int dashboardTask( void );
 
 extern Map* map;
+extern Drive* drive;
 
 #endif

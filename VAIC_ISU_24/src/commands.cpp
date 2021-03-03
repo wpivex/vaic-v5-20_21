@@ -15,40 +15,57 @@
  * using normal xy plane conventions with the origin at the center of the field.
  * Assumes the robot is at drive's current pose
  */
-float getDistanceToCoord(Drive* drive, float x, float y) {
+float getDistanceToCoord(float x, float y) {
   float xDiff = drive->getPose().x - x;
   float yDiff = drive->getPose().y - y;
 
   return sqrt(xDiff * xDiff + yDiff * yDiff);
 }
 
-/*
- * Goes to the nearest ball of the desired color using the given drive object.
- * 0 corresponds to a red ball and 1 corresponds to a blue ball.
- */
-void goToNearestBall(int desiredColor, Drive* drive) {
-  // TODO make drive object global and remove parameter from above
-  BallCoord* nearestBall;
+// Uses box objects from the camera to turn to, drive over, and pickup the nearest ball of a given color.
+// colorID should be 0 for red and 1 for blue, should never be 2 (for goals)
+void getNearestBall(int colorID) {
+  // Find the box obj corresponding to the nearest ball, comparing by depth from the box objects
+  MAP_RECORD mapRecord;
+  jetson_comms.get_data(&mapRecord);
+  jetson_comms.request_map();
+
+  fifo_object_box nearestBall;
   float minDistance = -1;
 
-  for (int i = 0; i < map->getNumBalls(); i++) {
-    BallCoord* ball = &map->getBallCoords()[i];
-    float distance = getDistanceToCoord(drive, ball->x, ball->y);
+  for (int i = 0; i < mapRecord.boxnum; i++) {
+    fifo_object_box box = mapRecord.boxobj[i];
 
-    if (ball->colorID == desiredColor) {
+    if (box.classID == colorID) {
+      float distance = box.depth / 25.4; // depth of object in inches
+
       if (minDistance == -1 || minDistance > distance) {
-        nearestBall = ball;
+        nearestBall = box;
         minDistance = distance;
       }
     }
   }
 
   if (minDistance != -1) {
-      drive->getBall({
-        nearestBall->x,
-        nearestBall->y,
-        map->getManagerCoords().deg
-    });
+    drive->foldIntakes(false);
+
+    // turn to ball
+    drive->turnToBall(minDistance, colorID);
+
+    // drive to ball
+    // drive->driveDistance(minDistance, true);
+
+    // pickup ball
+    // foldIntakes(true);
+    // driveDistance(12, true);
+    // driveDistance(-12, false);
+    // foldIntakes(false);
+  } else {
+    FILE *fp = fopen("/dev/serial2", "w");
+
+    fprintf(fp, "No balls of colorID %d were found.\n", colorID);
+
+    fclose(fp);
   }
 }
 
@@ -58,7 +75,7 @@ void goToNearestBall(int desiredColor, Drive* drive) {
  *
  * TODO for now, the goal is hardcoded to be the bottom right, the only one we have setup.
  */
-void goToNearestGoal(Drive* drive) {
+void goToNearestGoal() {
   // TODO account for obstructions
   // TODO determine angle based on desired goal and starting location
   float minX, minY, angle, minDistance = -1;
@@ -67,7 +84,7 @@ void goToNearestGoal(Drive* drive) {
     for (int yGoal = 0; yGoal < 3; yGoal++) { // lower numbers are towards the top
       float xCenter = (xGoal - 1) * (FIELD_LENGTH_IN / 2) + (1 - xGoal) * (GOAL_DIAMETER + 12);
       float yCenter = (yGoal - 1) * (FIELD_LENGTH_IN / 2) + (1 - yGoal) * (GOAL_DIAMETER + 12);
-      float distance = getDistanceToCoord(drive, xCenter, yCenter);
+      float distance = getDistanceToCoord(xCenter, yCenter);
 
       if (minDistance == -1 || minDistance > distance) {
         minX = xCenter;
@@ -81,12 +98,6 @@ void goToNearestGoal(Drive* drive) {
   minX = (2 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 2) * (GOAL_DIAMETER + 7);
   minY = (1 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 1) * (GOAL_DIAMETER + 7);
 
-  // FILE *fp = fopen("/dev/serial2", "w");
-
-  // fprintf(fp, "%.2f %.2f\n", minX, minY);
-
-  // fclose(fp);
-
   angle = 0;
 
   drive->goTo({
@@ -95,23 +106,8 @@ void goToNearestGoal(Drive* drive) {
     angle
   });
 }
-void aimAndScore()
-{
-  while(sonarLeft.distance(distanceUnits::in)==0)
-  {}//Wait for sensor to stop giving garbage
-  
-  while(sonarLeft.distance(distanceUnits::in) > 10.0){
-      LeftDriveSmart.spin(directionType::fwd, 5, percentUnits::pct);
-      RightDriveSmart.spin(directionType::rev, 5, percentUnits::pct);
-  }
-  LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
-  RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
 
-  scoreAllBalls();
-}
-
-void scoreAllBalls()
-{
+void scoreAllBalls() {
   leftIntake.spin(directionType::fwd, 100, percentUnits::pct);
   rightIntake.spin(directionType::fwd, 100, percentUnits::pct);
   rollerBack.spin(directionType::fwd, 100, percentUnits::pct);
@@ -123,4 +119,18 @@ void scoreAllBalls()
   rightIntake.stop();
   rollerBack.stop();
   yeet.stop();
+}
+
+void aimAndScore() {
+  while(sonarLeft.distance(distanceUnits::in) == 0) {} // Wait for sensor to stop giving garbage
+  
+  while(sonarLeft.distance(distanceUnits::in) > 10.0) {
+      LeftDriveSmart.spin(directionType::fwd, 5, percentUnits::pct);
+      RightDriveSmart.spin(directionType::rev, 5, percentUnits::pct);
+  }
+  
+  LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
+  RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
+
+  scoreAllBalls();
 }

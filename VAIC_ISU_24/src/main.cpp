@@ -12,9 +12,9 @@
 
 #include <math.h>
 #include "vex.h"
+#include <vex_units.h>
 #include "Drive.h"
 #include "commands.h"
-#include <vex_units.h>
 
 using namespace vex;
 
@@ -22,10 +22,9 @@ using namespace vex;
 competition Competition;
 
 Map* map = new Map();
+Drive* drive = new Drive();
 
-// create instance of jetson class to receive location and other
-// data from the Jetson nano
-//
+// create instance of jetson class to receive location and other data from the Jetson nano
 ai::jetson  jetson_comms;
 
 /*----------------------------------------------------------------------------*/
@@ -110,13 +109,10 @@ int main() {
   thread t1 = thread(dashboardTask); // start the status update display
 
   Competition.autonomous(autonomousMain); // Set up callbacks for autonomous and driver control periods.
-    
-  Drive* drive = new Drive();
 
   State robotState = startup;
 
-  this_thread::sleep_for(100);
-
+  FILE *fp = fopen("/dev/serial2", "w");
 
   while(1) {
     updateMapObj();
@@ -127,43 +123,53 @@ int main() {
       map->getManagerCoords().deg
     });
 
-    // FILE *fp = fopen("/dev/serial2", "w");
-
-    // fprintf(fp, "%d\n", (map->hasBall(0)));
-
-    // fclose(fp);
-
-    switch (robotState)
-    {
+    switch (robotState) {
       case startup:
-        drive->foldIntakes(false);
         robotState = lookForBalls;
+
+        fprintf(fp, "%d\n", robotState);
+        fflush(fp);
+
         break;
       case lookForBalls:
         //Find balls
-        if(map->hasBall(0))//if balls of color red are present
+        if(map->hasBall(0)) //if balls of color red are present
         {
           LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
           RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
-          robotState = collectingBalls;//collectingBalls;
+          robotState = collectingBalls;
+
+          fprintf(fp, "%d\n", robotState);
+          fflush(fp);
         } else {
           LeftDriveSmart.spin(directionType::rev, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
           RightDriveSmart.spin(directionType::fwd, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
         }
         break;
       case collectingBalls:
-        goToNearestBall(0, drive);
-        robotState = scoreBalls;
+        getNearestBall(0); // red ball
+        robotState = done;
+        // robotState = scoreBalls;
+
+        fprintf(fp, "%d\n", robotState);
+        fflush(fp);
         break;
       case scoreBalls:
         //Score in goal
-        goToNearestGoal(drive);
+        goToNearestGoal();
+        
         drive->turnDegrees(25);
         aimAndScore();
+        
         robotState = done;
+
+        fprintf(fp, "%d\n", robotState);
+        fflush(fp);
         break;
     }
 
     this_thread::sleep_for(loop_time); // Allow other tasks to run
   }
+
+  fclose(fp);
 }

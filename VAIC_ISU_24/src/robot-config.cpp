@@ -25,8 +25,6 @@ motor rollerBack = motor(PORT19, ratio6_1, true);
 encoder encl = encoder(Brain.ThreeWirePort.C);
 encoder encr = encoder(Brain.ThreeWirePort.G);
 
-sonar sonarLeft = sonar(Brain.ThreeWirePort.E);
-
 double leftInches()
 {
   return encl.position(rotationUnits::deg)*DEG_TO_IN_FACTOR;
