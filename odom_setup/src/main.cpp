@@ -115,6 +115,9 @@ int main() {
 
   State robotState = startup;
 
+  this_thread::sleep_for(100);
+
+
   while(1) {
     updateMapObj();
 
@@ -155,7 +158,8 @@ int main() {
       case scoreBalls:
         //Score in goal
         goToNearestGoal(drive);
-        scoreAllBalls();
+        drive->turnDegrees(25);
+        aimAndScore();
         robotState = done;
         break;
     }

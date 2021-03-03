@@ -19,5 +19,6 @@ float getDistanceToCoord(Drive* drive, BallCoord* ball);
 void goToNearestBall(int colorID, Drive* drive);
 void goToNearestGoal(Drive* drive);
 void scoreAllBalls();
+void aimAndScore();
 
 #endif

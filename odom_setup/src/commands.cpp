@@ -78,8 +78,8 @@ void goToNearestGoal(Drive* drive) {
   }
 
   // hard code for the only goal we have setup rn, in the middle right.
-  minX = (2 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 2) * (GOAL_DIAMETER + 12);
-  minY = (1 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 1) * (GOAL_DIAMETER + 12);
+  minX = (2 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 2) * (GOAL_DIAMETER + 7);
+  minY = (1 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 1) * (GOAL_DIAMETER + 7);
 
   // FILE *fp = fopen("/dev/serial2", "w");
 
@@ -94,6 +94,20 @@ void goToNearestGoal(Drive* drive) {
     minY,
     angle
   });
+}
+void aimAndScore()
+{
+  while(sonarLeft.distance(distanceUnits::in)==0)
+  {}//Wait for sensor to stop giving garbage
+  
+  while(sonarLeft.distance(distanceUnits::in) > 10.0){
+      LeftDriveSmart.spin(directionType::fwd, 5, percentUnits::pct);
+      RightDriveSmart.spin(directionType::rev, 5, percentUnits::pct);
+  }
+  LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
+  RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
+
+  scoreAllBalls();
 }
 
 void scoreAllBalls()
