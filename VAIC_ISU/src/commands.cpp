@@ -15,7 +15,7 @@
  * using normal xy plane conventions with the origin at the center of the field.
  * Assumes the robot is at drive's current pose
  */
-float getDistanceToCoord(float x, float y, Drive* drive) {
+float getDistanceToCoord(float x, float y) {
   float xDiff = drive->getPose().x - x;
   float yDiff = drive->getPose().y - y;
 
@@ -24,7 +24,7 @@ float getDistanceToCoord(float x, float y, Drive* drive) {
 
 // Uses box objects from the camera to turn to, drive over, and pickup the nearest ball of a given color.
 // colorID should be 0 for red and 1 for blue, should never be 2 (for goals)
-void getNearestBall(int colorID, Drive* drive) {
+void getNearestBall(int colorID) {
   // TODO make drive object global and remove parameter from above
   drive->foldIntakes(false);
 
@@ -78,7 +78,7 @@ void getNearestBall(int colorID, Drive* drive) {
  *
  * TODO for now, the goal is hardcoded to be the bottom right, the only one we have setup.
  */
-void goToNearestGoal(Drive* drive) {
+void goToNearestGoal() {
   // TODO account for obstructions
   // TODO determine angle based on desired goal and starting location
   float minX, minY, angle, minDistance = -1;
@@ -87,7 +87,7 @@ void goToNearestGoal(Drive* drive) {
     for (int yGoal = 0; yGoal < 3; yGoal++) { // lower numbers are towards the top
       float xCenter = (xGoal - 1) * (FIELD_LENGTH_IN / 2) + (1 - xGoal) * (GOAL_DIAMETER + 12);
       float yCenter = (yGoal - 1) * (FIELD_LENGTH_IN / 2) + (1 - yGoal) * (GOAL_DIAMETER + 12);
-      float distance = getDistanceToCoord(drive, xCenter, yCenter);
+      float distance = getDistanceToCoord(xCenter, yCenter);
 
       if (minDistance == -1 || minDistance > distance) {
         minX = xCenter;

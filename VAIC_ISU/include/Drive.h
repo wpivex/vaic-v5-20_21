@@ -1,8 +1,7 @@
 #pragma once
 
-#include "vex.h"
-
-using namespace vex;
+#ifndef DRIVE_H_
+#define DRIVE_H_
 
 const double MAX_DRIVE_PERCENTAGE = 25;
 const double MIN_DRIVE_PERCENTAGE = 2;
@@ -28,3 +27,5 @@ class Drive {
   private:
     Pose myPose;
 };
+
+#endif

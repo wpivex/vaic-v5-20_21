@@ -22,6 +22,7 @@ using namespace vex;
 competition Competition;
 
 Map* map = new Map();
+Drive* drive = new Drive();
 
 // create instance of jetson class to receive location and other data from the Jetson nano
 ai::jetson  jetson_comms;
@@ -108,8 +109,6 @@ int main() {
   thread t1 = thread(dashboardTask); // start the status update display
 
   Competition.autonomous(autonomousMain); // Set up callbacks for autonomous and driver control periods.
-    
-  Drive* drive = new Drive();
 
   State robotState = startup;
 
@@ -125,12 +124,11 @@ int main() {
     switch (robotState)
     {
       case startup:
-        drive->foldIntakes(false);
         robotState = lookForBalls;
         break;
       case lookForBalls:
         //Find balls
-        if(map->hasBall(0))//if balls of color red are present
+        if(map->hasBall(0)) //if balls of color red are present
         {
           LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
           RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
@@ -141,12 +139,13 @@ int main() {
         }
         break;
       case collectingBalls:
-        goToNearestBall(0, drive);
-        robotState = scoreBalls;
+        getNearestBall(0); // red ball
+        robotState = lookForBalls;
+        // robotState = scoreBalls;
         break;
       case scoreBalls:
         //Score in goal
-        goToNearestGoal(drive);
+        goToNearestGoal();
         scoreAllBalls();
         robotState = done;
         break;
