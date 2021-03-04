@@ -9,6 +9,7 @@
 
 #include "commands.h"
 #include "math.h"
+#include "robot-config.h"
 
 /*
  * Gets the distance to the coordinate, where x and y are measured 
@@ -52,14 +53,15 @@ void getNearestBall(int colorID) {
     // turn to ball
     drive->turnToBall(minDistance, colorID);
 
+    this_thread::sleep_for(200);
+
     // drive to ball
-    // drive->driveDistance(minDistance, true);
+    drive->driveDistance(minDistance - 3, true);
 
     // pickup ball
-    // foldIntakes(true);
-    // driveDistance(12, true);
-    // driveDistance(-12, false);
-    // foldIntakes(false);
+    drive->foldIntakes(true);
+    drive->driveDistance(9, true);
+    drive->foldIntakes(false);
   } else {
     FILE *fp = fopen("/dev/serial2", "w");
 
@@ -95,8 +97,8 @@ void goToNearestGoal() {
   }
 
   // hard code for the only goal we have setup rn, in the middle right.
-  minX = (2 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 2) * (GOAL_DIAMETER + 7);
-  minY = (1 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 1) * (GOAL_DIAMETER + 7);
+  minX = (2 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 2) * (GOAL_DIAMETER + 10);
+  minY = (1 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 1) * (GOAL_DIAMETER + 10);
 
   angle = 0;
 
@@ -123,11 +125,16 @@ void scoreAllBalls() {
 
 void aimAndScore() {
   while(sonarLeft.distance(distanceUnits::in) == 0) {} // Wait for sensor to stop giving garbage
+
+  drive->driveDistance(-2, false);
+  drive->turnDegrees(25);
   
   while(sonarLeft.distance(distanceUnits::in) > 10.0) {
       LeftDriveSmart.spin(directionType::fwd, 5, percentUnits::pct);
       RightDriveSmart.spin(directionType::rev, 5, percentUnits::pct);
   }
+
+  drive->driveDistance(2, false);
   
   LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
   RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);

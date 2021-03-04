@@ -148,8 +148,7 @@ int main() {
         break;
       case collectingBalls:
         getNearestBall(0); // red ball
-        robotState = done;
-        // robotState = scoreBalls;
+        robotState = scoreBalls;
 
         fprintf(fp, "%d\n", robotState);
         fflush(fp);
@@ -158,7 +157,6 @@ int main() {
         //Score in goal
         goToNearestGoal();
         
-        drive->turnDegrees(25);
         aimAndScore();
         
         robotState = done;

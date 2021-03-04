@@ -57,13 +57,6 @@ void updateMapObj() {
     float workerX, workerY, workerHeading;
     link.get_remote_location(workerX, workerY, workerHeading);
 
-    // robots[1] = {
-    //   1, // worker
-    //   workerX / -25.4f, // hopefully in to the right of (0,0), need to test on field
-    //   workerY / -25.4f, // hopefully in above of (0,0), need to test on field
-    //   (float) (270 - ((workerHeading * 360 / (2 * M_PI)))), // hopefully starts at +x and increases counterclockwise, need to test on field
-    //   15 // 15 in
-    // };
     robots[1] = {
       1, // worker
       workerX, // hopefully in to the right of (0,0), need to test on field

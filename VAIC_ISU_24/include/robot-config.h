@@ -20,6 +20,8 @@ extern motor rollerBack;
 extern encoder encl;
 extern encoder encr;
 
+extern sonar sonarLeft;
+
 const static int TICKS_PER_ROTATION = 1020;
 const static double ENCODER_WHEEL_DIAMETER = 2.75;
 const static double DEG_TO_IN_FACTOR = M_PI * ENCODER_WHEEL_DIAMETER/TICKS_PER_ROTATION;
