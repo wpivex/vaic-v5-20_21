@@ -84,8 +84,8 @@ void goToNearestGoal() {
 
   for (int xGoal = 0; xGoal < 3; xGoal++) { // lower numbers are to the left
     for (int yGoal = 0; yGoal < 3; yGoal++) { // lower numbers are towards the top
-      float xCenter = (xGoal - 1) * (FIELD_LENGTH_IN / 2) + (1 - xGoal) * (GOAL_DIAMETER + 12);
-      float yCenter = (yGoal - 1) * (FIELD_LENGTH_IN / 2) + (1 - yGoal) * (GOAL_DIAMETER + 12);
+      float xCenter = (xGoal - 1) * (FIELD_LENGTH_IN / 2) + (1 - xGoal) * (GOAL_DIAMETER + 4);
+      float yCenter = (yGoal - 1) * (FIELD_LENGTH_IN / 2) + (1 - yGoal) * (GOAL_DIAMETER + 4);
       float distance = getDistanceToCoord(xCenter, yCenter);
 
       if (minDistance == -1 || minDistance > distance) {
@@ -95,6 +95,9 @@ void goToNearestGoal() {
       }
     }
   }
+
+  // TODO fix angle and position for middle goal, at 0,0
+  // angle = (atan2(minY, minX) * 180 / 3.14);
 
   // hard code for the only goal we have setup rn, in the middle right.
   minX = (2 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 2) * (GOAL_DIAMETER + 10);
@@ -129,7 +132,7 @@ void aimAndScore() {
   drive->driveDistance(-2, false);
   drive->turnDegrees(25);
   
-  while(sonarLeft.distance(distanceUnits::in) > 10.0) {
+  while(sonarLeft.distance(distanceUnits::in) > 12.0) {
       LeftDriveSmart.spin(directionType::fwd, 5, percentUnits::pct);
       RightDriveSmart.spin(directionType::rev, 5, percentUnits::pct);
   }

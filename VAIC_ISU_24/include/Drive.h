@@ -10,11 +10,11 @@ const double Kpstraight = 3.5; //We probably want a seperate Kp value for turnin
 const double Kpturn = 2.5;
 
 const int BALL_TURN_SETPOINT = 160; // # x pixels of the realsense camera / 2
-const int BALL_TURN_MAX_ERROR = 7;
-const int BALL_TURN_MAX_OUTPUT = 5;
-const float BALL_TURN_KP = 0.03;
-const float BALL_TURN_KI = 0.001;
-const int BALL_TURN_KI_THRESHOLD = 30;
+const int BALL_TURN_MAX_ERROR = 10;
+const int BALL_TURN_MAX_OUTPUT = 1;
+const float BALL_TURN_KP = 0.035;
+const float BALL_TURN_KI = 0.0003;
+const int BALL_TURN_KI_THRESHOLD = 20;
 
 struct Pose{double x; double y; double theta;};
 

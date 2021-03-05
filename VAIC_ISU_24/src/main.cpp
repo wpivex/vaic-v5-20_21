@@ -152,6 +152,7 @@ int main() {
 
         fprintf(fp, "%d\n", robotState);
         fflush(fp);
+
         break;
       case scoreBalls:
         //Score in goal

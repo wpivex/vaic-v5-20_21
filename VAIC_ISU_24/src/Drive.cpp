@@ -53,15 +53,15 @@ void Drive::goTo(Pose newPose) {
 // turning, even if other balls come into view
 void Drive::turnToBall(float desiredDepth, int colorID) {
   MAP_RECORD mapRecord;
-  int error, xPixel, prevXPixel;
+  int error, xPixel;
   int sumError = 0;
   float minDiffDepth, output;
+
+  int numCyclesAtTarget = 0;
 
   do {
     jetson_comms.get_data(&mapRecord);
     jetson_comms.request_map();
-
-    prevXPixel = xPixel;
 
     minDiffDepth = 100;
 
@@ -86,9 +86,19 @@ void Drive::turnToBall(float desiredDepth, int colorID) {
     LeftDriveSmart.spin(directionType::rev, output, percentUnits::pct);
     RightDriveSmart.spin(directionType::fwd, output, percentUnits::pct);
 
-    this_thread::sleep_for(10);
+    if (abs(error) < BALL_TURN_MAX_ERROR)
+      numCyclesAtTarget++;
+    else
+      numCyclesAtTarget = 0;
 
-  } while (abs(error) >= BALL_TURN_MAX_ERROR || abs(xPixel - prevXPixel) >= BALL_TURN_MAX_OUTPUT);
+    this_thread::sleep_for(10);
+    // FILE *fp = fopen("/dev/serial2", "w");
+
+    // fprintf(fp, "error:%d cycles:%d\n", abs(error), numCyclesAtTarget);
+
+    // fclose(fp);
+
+  } while (abs(error) >= BALL_TURN_MAX_ERROR || numCyclesAtTarget <= 20);
 
   LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
   RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
