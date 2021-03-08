@@ -16,7 +16,7 @@ void Drive::setPose(Pose newPose) {
   myPose.theta = newPose.theta;
 }
 
-void Drive::goTo(Pose newPose) {
+void Drive::goTo(Pose newPose, bool toFinalAngle) {
   if( std::abs(newPose.x - myPose.x) > .5 || std::abs(newPose.y - myPose.y) > .5 )
   {
     double dx = newPose.x - myPose.x;
@@ -36,16 +36,19 @@ void Drive::goTo(Pose newPose) {
     driveDistance(dist, false); //Position is updated within this function
   }
 
-  double turn2 = newPose.theta - myPose.theta;
+  //Complete final turn if relevant
+  if(toFinalAngle){
+    double turn2 = newPose.theta - myPose.theta;
 
-  while(turn2 > 180) {
-    turn2 -= 360;
-  }
-  while(turn2 < -180) {
-    turn2 += 360;
-  }
+    while(turn2 > 180) {
+      turn2 -= 360;
+    }
+    while(turn2 < -180) {
+      turn2 += 360;
+    }
 
-  turnDegrees(turn2); //Heading is updated within this function
+    turnDegrees(turn2); //Heading is updated within this function
+  }
 }
 
 // Turns to the desired ball given by the depth from the camera (in inches) and color
@@ -169,8 +172,20 @@ void Drive::driveDistance(double inches, bool intaking) {
     if(error < 0)
       driveValue = -driveValue;
 
-    LeftDriveSmart.spin(directionType::fwd, driveValue, percentUnits::pct);
-    RightDriveSmart.spin(directionType::fwd, driveValue, percentUnits::pct);
+    double dist = sonarLeft.distance(distanceUnits::in);
+    bool obstacleDetected = dist < (error - 6) && dist > 4;
+    vex::controller::lcd().print("Dist --%f--\r", dist);
+    vexDelay(20);
+
+    if(!obstacleDetected)
+    {
+      LeftDriveSmart.spin(directionType::fwd, driveValue, percentUnits::pct);
+      RightDriveSmart.spin(directionType::fwd, driveValue, percentUnits::pct);
+    }else{
+      maxTime+=10;
+      LeftDriveSmart.stop();
+      RightDriveSmart.stop();
+    }
 
     if(intaking) {
       leftIntake.spin(directionType::fwd, 100, percentUnits::pct);

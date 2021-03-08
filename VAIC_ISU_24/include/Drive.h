@@ -23,7 +23,7 @@ class Drive {
 		Drive();
 		
     void setPose(Pose newPose);
-    void goTo(Pose newPose);
+    void goTo(Pose newPose, bool toFinalAngle);
 
     void turnToBall(float desiredDepth, int colorID);
 

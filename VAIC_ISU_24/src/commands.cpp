@@ -109,7 +109,7 @@ void goToNearestGoal() {
     minX,
     minY,
     angle
-  });
+  },false);
 }
 
 void scoreAllBalls() {
@@ -139,8 +139,8 @@ void aimAndScore() {
 
   drive->driveDistance(2, false);
   
-  LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
-  RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
+  LeftDriveSmart.stop();
+  RightDriveSmart.stop();
 
   scoreAllBalls();
 }
