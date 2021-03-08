@@ -4,7 +4,7 @@
 
 using namespace vex;
 
-enum State{startup,lookForBalls,collectingBalls,scoreBalls,done};
+enum State{STATE_STARTUP,STATE_SEARCHING,STATE_COLLECTING,STATE_SCORING,STATE_DONE};
 
 extern brain Brain;
 //Motors and motorgroups to be used in other classes

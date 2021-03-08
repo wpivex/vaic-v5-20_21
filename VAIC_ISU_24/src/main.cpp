@@ -101,6 +101,13 @@ void autonomousMain(void) {
   firstAutoFlag = false;
 }
 
+// Define strings for states for pprinting 
+const char *PSTATE[5] = {"Startup", "Searching", "Collecting", "Scoring", "Done"};
+void printState(FILE* stream, State s) {
+  fprintf(stream, "STATE: %s\tJetPkts: %d\n", PSTATE[s], jetson_comms.get_packets());
+  fflush(stream);
+}
+
 int main() {
   vexcodeInit(); // Initializing Robot Configuration. DO NOT REMOVE!
 
@@ -110,7 +117,7 @@ int main() {
 
   Competition.autonomous(autonomousMain); // Set up callbacks for autonomous and driver control periods.
 
-  State robotState = startup;
+  State robotState = STATE_STARTUP;
 
   FILE *fp = fopen("/dev/serial2", "w");
 
@@ -122,48 +129,37 @@ int main() {
       map->getManagerCoords().y,
       map->getManagerCoords().deg
     });
-
+    // Print current state, then run transition
+    printState(fp, robotState);
     switch (robotState) {
-      case startup:
-        robotState = lookForBalls;
-
-        fprintf(fp, "%d\n", robotState);
-        fflush(fp);
+      case STATE_STARTUP:
+        robotState = STATE_SEARCHING;
 
         break;
-      case lookForBalls:
+      case STATE_SEARCHING:
         //Find balls
         if(map->hasBall(0)) //if balls of color red are present
         {
           LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
           RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
-          robotState = collectingBalls;
+          robotState = STATE_COLLECTING;
 
-          fprintf(fp, "%d\n", robotState);
-          fflush(fp);
         } else {
           LeftDriveSmart.spin(directionType::rev, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
           RightDriveSmart.spin(directionType::fwd, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
         }
         break;
-      case collectingBalls:
+      case STATE_COLLECTING:
         getNearestBall(0); // red ball
-        robotState = scoreBalls;
-
-        fprintf(fp, "%d\n", robotState);
-        fflush(fp);
-
+        robotState = STATE_SCORING;
         break;
-      case scoreBalls:
+      case STATE_SCORING:
         //Score in goal
         goToNearestGoal();
         
         aimAndScore();
         
-        robotState = done;
-
-        fprintf(fp, "%d\n", robotState);
-        fflush(fp);
+        robotState = STATE_DONE;
         break;
     }
 
