@@ -133,7 +133,7 @@ int main() {
         break;
       case lookForBalls:
         //Find balls
-        if(map->hasBall(0)) //if balls of color red are present
+        if(map->hasBall(0, false)) //if balls of color red and not currently in goals are present
         {
           LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
           RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);

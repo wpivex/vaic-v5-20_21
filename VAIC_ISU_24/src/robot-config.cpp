@@ -27,22 +27,22 @@ encoder encr = encoder(Brain.ThreeWirePort.G);
 
 sonar sonarLeft = sonar(Brain.ThreeWirePort.E);
 
-double leftInches()
-{
+double leftInches() {
   return encl.position(rotationUnits::deg)*DEG_TO_IN_FACTOR;
 }
-double rightInches()
-{
+
+double rightInches() {
   return encr.position(rotationUnits::deg)*DEG_TO_IN_FACTOR;
 }
-double velocityLeft()
-{
+
+double velocityLeft() {
   return encl.velocity(velocityUnits::dps)*DEG_TO_IN_FACTOR;
 }
-double velocityRight()
-{
+
+double velocityRight() {
   return encr.velocity(velocityUnits::dps)*DEG_TO_IN_FACTOR;
 }
+
 /**
  * Used to initialize code/tasks/devices added using tools in VEXcode Pro.
  *

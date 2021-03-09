@@ -41,7 +41,7 @@ class Map {
     BallCoord* getScoredBallCoords(void);
     int getNumUnscoredBalls(void);
     int getNumScoredBalls(void);
-    bool hasBall(int, bool);
+    bool hasBall(int, bool); // int colorID and bool currently scored in a goal
     RobotCoord getManagerCoords(void);
     RobotCoord getWorkerCoords(void);
 
