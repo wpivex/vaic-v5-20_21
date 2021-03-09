@@ -19,10 +19,12 @@ typedef struct {
   int colorID; // 0 = red, 1 = blue, -1 = invalid
   float x; // in above center of field (0,0)
   float y; // in right of center of field (0,0)
+  float z; // in above floor
+  int goal; // id of goal the ball is scored in. https://imgur.com/a/QyFIE9a. -1 is unscored
 } BallCoord;
 
 typedef struct {
-  int robotID; // 0 = manager, 1 = worker, 2 = enemy, -1 = invalid
+  int robotID; // 0 = manager, 1 = worker, -1 = invalid
   float x; // in above center of field (0,0)
   float y; // in right of center of field (0,0)
   float deg; // heading in degrees, counterclockwise from +x
@@ -33,15 +35,15 @@ void updateMapObj(void);
 
 class Map {
   public:
-    const static int MAX_BALLS = 36, MAX_ENEMIES = 2;
+    const static int MAX_BALLS = 36;
 
-    BallCoord* getBallCoords(void);
-    int getNumBalls(void);
-    bool hasBall(int);
+    BallCoord* getUnscoredBallCoords(void);
+    BallCoord* getScoredBallCoords(void);
+    int getNumUnscoredBalls(void);
+    int getNumScoredBalls(void);
+    bool hasBall(int, bool);
     RobotCoord getManagerCoords(void);
     RobotCoord getWorkerCoords(void);
-    RobotCoord* getEnemyCoords(void);
-    int getNumEnemies(void);
 
     // Methods to be used by manager/worker bots to add to the shared map.
     // Interpretation of new data and removal of old elements will be handled in this class,
@@ -51,15 +53,15 @@ class Map {
 
     // Methods to be used by manager/worker bots to completely overwrite all map data.
     // Useful for testing mapping from one robot while the add methods are not finished.
-    void setBallCoords(BallCoord*, int);
+    void setBallCoords(BallCoord*, BallCoord*, int, int);
     void setRobotCoords(RobotCoord*, int);
 
   private:
-    int numBalls = 0, numEnemies = 0; // number of each currently on the map
-    BallCoord balls[MAX_BALLS]; // not all elements will likely be used simultaneously
+    int numUnscoredBalls = 0, numScoredBalls = 0; // number of each currently on the map
+    BallCoord unscoredBalls[MAX_BALLS]; // not all elements will likely be used simultaneously
+    BallCoord scoredBalls[MAX_BALLS]; // not all elements will likely be used simultaneously
     RobotCoord manager;
     RobotCoord worker;
-    RobotCoord enemies[MAX_ENEMIES];
 };
 
 #endif

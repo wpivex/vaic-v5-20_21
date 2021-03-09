@@ -10,6 +10,7 @@
 #include "commands.h"
 #include "math.h"
 #include "robot-config.h"
+#include "vex.h"
 
 /*
  * Gets the distance to the coordinate, where x and y are measured 

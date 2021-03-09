@@ -18,22 +18,38 @@ using namespace ai;
  */
 void updateMapObj() {
   MAP_RECORD mapRecord; // Map from the Jetson
-
   jetson_comms.get_data(&mapRecord);
-  
   jetson_comms.request_map();
 
   // get ball data from mapRecord
   int numBalls = mapRecord.mapnum;
-  BallCoord balls[numBalls];
+  BallCoord unscoredBalls[numBalls];
+  BallCoord scoredBalls[numBalls];
+  int unscoredIndex = 0, scoredIndex = 0, numScored = 0, numUnscored = 0;
 
   for (int i = 0; i < numBalls; i++) {
     float x = (mapRecord.mapobj[i].positionX / -25.4);
     float y = (mapRecord.mapobj[i].positionY / -25.4);
-    balls[i] = {mapRecord.mapobj[i].age, mapRecord.mapobj[i].classID, x, y};
+    float z = (mapRecord.mapobj[i].positionZ / 25.4);
+
+    for (int xGoal = 0; xGoal < 3; xGoal++) { // lower numbers are to the left
+      for (int yGoal = 0; yGoal < 3; yGoal++) { // lower numbers are towards the top
+        float xCenter = (xGoal - 1) * (FIELD_LENGTH_IN / 2) + (1 - xGoal) * (GOAL_DIAMETER);
+        float yCenter = (yGoal - 1) * (FIELD_LENGTH_IN / 2) + (1 - yGoal) * (GOAL_DIAMETER);
+        float distance = sqrt((xGoal - xCenter) * (xGoal - xCenter) + (yGoal - yCenter) * (yGoal - yCenter)); // center of goal to ball
+
+        if (distance <= GOAL_DIAMETER / 2) {
+          scoredBalls[scoredIndex++] = {mapRecord.mapobj[i].age, mapRecord.mapobj[i].classID, x, y, z, xGoal * 3 + yGoal};
+          numScored++;
+        } else {
+          unscoredBalls[unscoredIndex++] = {mapRecord.mapobj[i].age, mapRecord.mapobj[i].classID, x, y, z, -1};
+          numUnscored++;
+        }
+      }
+    }    
   }
 
-  map->setBallCoords(balls, numBalls);
+  map->setBallCoords(unscoredBalls, scoredBalls, numUnscored, numScored);
 
   // get manager robot data from mapRecord and worker data from vex link coords
   RobotCoord robots[2];
@@ -71,20 +87,30 @@ void updateMapObj() {
   map->setRobotCoords(robots, numRobots);
 } // updateMapObj()
 
-BallCoord* Map::getBallCoords(void) {
-  return balls;
+BallCoord* Map::getUnscoredBallCoords(void) {
+  return unscoredBalls;
 }
 
-int Map::getNumBalls(void) {
-  return numBalls;
+BallCoord* Map::getScoredBallCoords(void) {
+  return scoredBalls;
 }
 
-bool Map::hasBall(int id){
-  for(int i = 0; i<MAX_BALLS;i++)
-  {
-    if(id==balls[i].colorID)
+int Map::getNumUnscoredBalls(void) {
+  return numUnscoredBalls;
+} 
+
+int Map::getNumScoredBalls(void) {
+  return numScoredBalls;
+} 
+
+bool Map::hasBall(int colorID, bool scored) {
+  for(int i = 0; i < MAX_BALLS; i++) {
+    if ((scored && scoredBalls[i].colorID == colorID) ||
+        (!scored && unscoredBalls[i].colorID == colorID)) {
       return true;
+    }
   }
+
   return false;
 }
 
@@ -96,14 +122,6 @@ RobotCoord Map::getWorkerCoords(void) {
   return worker;
 }
 
-RobotCoord* Map::getEnemyCoords(void) {
-  return enemies;
-}
-
-int Map::getNumEnemies(void) {
-  return numEnemies;
-}
-
 // void Map::addBallCoord(BallCoord coord) {
 //   // TODO implement intelligent management of existing elements given new data
 // }
@@ -112,24 +130,26 @@ int Map::getNumEnemies(void) {
 //   // TODO implement intelligent management of existing elements given new data
 // }
 
-void Map::setBallCoords(BallCoord* coords, int numCoords) {
+void Map::setBallCoords(BallCoord* unscored, BallCoord* scored, int numUnscored, int numScored) {
   for (int i = 0; i < MAX_BALLS; i++) {
-    if (i < numCoords)
-      balls[i] = coords[i];
-    else 
-      balls[i] = {0, -1, 0, 0};
+    unscoredBalls[i] = {0, -1, 0, 0, 0, -1};
+    scoredBalls[i] = {0, -1, 0, 0, 0, -1};
+
+    if (i < numUnscored) {
+      unscoredBalls[i] = unscored[i]; 
+    } 
+    if (i < numScored) {
+      scoredBalls[i] = scored[i]; 
+    } 
   }
 
-  numBalls = numCoords;
+  numUnscoredBalls = numUnscored;
+  numScoredBalls = numScored;
 }
 
 void Map::setRobotCoords(RobotCoord* coords, int numCoords) {
   manager = {-1, 0, 0, 0, 0};
   worker = {-1, 0, 0, 0, 0};
-  
-  for (int i = 0; i < MAX_ENEMIES; i++)
-    enemies[i] = {-1, 0, 0, 0, 0};
-  numEnemies = 0;
 
   for (int i = 0; i < numCoords; i++) {
     switch(coords[i].robotID) {
@@ -139,11 +159,6 @@ void Map::setRobotCoords(RobotCoord* coords, int numCoords) {
 
       case 1:
         worker = coords[i];
-        break;
-
-      case 2:
-        if (numEnemies < MAX_ENEMIES)
-          enemies[numEnemies++] = coords[i];
         break;
     }
   }

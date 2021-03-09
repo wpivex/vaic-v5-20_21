@@ -36,6 +36,9 @@ extern ai::robot_link  link;
 
 extern int dashboardTask( void );
 
+const float FIELD_LENGTH_IN = 11.7 * 12;
+const float GOAL_DIAMETER = 12; // actual: 11.29
+
 extern Map* map;
 extern Drive* drive;
 
