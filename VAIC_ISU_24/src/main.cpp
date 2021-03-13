@@ -108,6 +108,7 @@ void printStateChange(FILE* stream, State s) {
   if(s != prev) {
     prev = s;
     fprintf(stream, "STATE: %s\tJetPkts: %ld\n", PSTATE[s], jetson_comms.get_packets());
+    vex::controller::lcd().print("S: %s J: %ld", PSTATE[s], jetson_comms.get_packets());
     fflush(stream);
   }
 }
@@ -139,9 +140,34 @@ int main() {
     });
     // Print current state, then run transition
     printStateChange(fp, robotState);
+    int c = 0;
     switch (robotState) {
       case STATE_STARTUP:
-        // State machine initialized and running, switch to search mode
+        // State machine initialized and running
+        while(!vex::controller(primary).ButtonUp.pressing()) {
+          c++; // lol
+          if(c % 100 == 0) {
+            fprintf(fp, "Awaiting start... \n");
+            vex::controller::lcd().print("V5 Ready. Jet: %d", jetson_comms.get_packets());
+          } else if (c % 50 == 0) {
+            fprintf(fp, "Press up on controller\n");
+            vex::controller::lcd().print("Press up to start");
+          }
+          fflush(fp);
+          this_thread::sleep_for(10);
+
+          if(vex::controller(primary).ButtonLeft.pressing()) {
+            drive->setPose({ 
+              map->getManagerCoords().x,
+              map->getManagerCoords().y,
+              map->getManagerCoords().deg
+            });
+            drive->goTo({60.0, -60.0, 0.0}, false);
+          }
+        }
+        drive->driveDistance(-14, false);
+        drive->turnDegrees(-50);
+        // Switch to search mode
         robotState = STATE_SEARCHING;
         break;
       case STATE_SEARCHING:
@@ -164,10 +190,16 @@ int main() {
       case STATE_SCORING:
         //Score in goal
         goToNearestGoal();
-        
+        drive->setPose({ 
+          map->getManagerCoords().x,
+          map->getManagerCoords().y,
+          map->getManagerCoords().deg
+        });
         aimAndScore();
         
         robotState = STATE_DONE;
+        break;
+      default:
         break;
     }
 

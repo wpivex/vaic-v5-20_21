@@ -62,6 +62,7 @@ void getNearestBall(int colorID) {
     drive->foldIntakes(true);
     drive->driveDistance(9, true);
     drive->foldIntakes(false);
+    drive->driveDistance(-14, true);
   } else {
     FILE *fp = fopen("/dev/serial2", "w");
 
@@ -80,6 +81,9 @@ void getNearestBall(int colorID) {
 void goToNearestGoal() {
   // TODO account for obstructions
   // TODO determine angle based on desired goal and starting location
+  FILE *fp = fopen("/dev/serial2", "w");
+  fprintf(fp, "Go to nearest goal\n");
+  fflush(fp);
   float minX, minY, angle, minDistance = -1;
 
   for (int xGoal = 0; xGoal < 3; xGoal++) { // lower numbers are to the left
@@ -98,18 +102,22 @@ void goToNearestGoal() {
 
   // TODO fix angle and position for middle goal, at 0,0
   // angle = (atan2(minY, minX) * 180 / 3.14);
-
+  fprintf(fp, "Calc goal pose\n");
+  fflush(fp);
   // hard code for the only goal we have setup rn, in the middle right.
-  minX = (2 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 2) * (GOAL_DIAMETER + 10);
-  minY = (1 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 1) * (GOAL_DIAMETER + 10);
-
-  angle = 0;
-
+  // minX = (2 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 2) * (GOAL_DIAMETER + 10);
+  // minY = (1 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 1) * (GOAL_DIAMETER + 10);
+  
+  // hardcode for corner goal probably
+  minX = 65;
+  minY = -65;
+  angle = 270;
+  fclose(fp);
   drive->goTo({
     minX,
     minY,
     angle
-  },false);
+  },true);
 }
 
 void scoreAllBalls() {

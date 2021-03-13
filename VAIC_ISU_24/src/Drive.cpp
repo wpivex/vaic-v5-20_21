@@ -17,22 +17,31 @@ void Drive::setPose(Pose newPose) {
 }
 
 void Drive::goTo(Pose newPose, bool toFinalAngle) {
+  FILE *fp = fopen("/dev/serial2", "w");
+
+  fprintf(fp, "goto %f,%f  a: %f\n", newPose.x, newPose.y, newPose.theta);
+  fflush(fp);
   if( std::abs(newPose.x - myPose.x) > .5 || std::abs(newPose.y - myPose.y) > .5 )
   {
     double dx = newPose.x - myPose.x;
     double dy = newPose.y - myPose.y;
 
-    double turn1 = (atan2(dy, dx) * 180 / 3.14) - myPose.theta; //Calculate angle to new position, subtract current angle to know how much to turn
+    double turnErr = (atan2(dy, dx) * 180 / 3.14) - myPose.theta; //Calculate angle to new position, subtract current angle to know how much to turn
 
-    while(turn1 > 180) {
-      turn1 -= 360;
+    while(turnErr > 180) {
+      turnErr -= 360;
     }
-    while(turn1 < -180) {
-      turn1 += 360;
+    while(turnErr < -180) {
+      turnErr += 360;
     }
-    turnDegrees(turn1); //Heading is updated within this function
+    turnDegrees(turnErr); //Heading is updated within this function
+    fprintf(fp, "turning to %f\n", turnErr);
+    fflush(fp);
 
     double dist = sqrt(dx * dx + dy * dy);
+    fprintf(fp, "driveDist %f\n", dist);
+    fflush(fp);
+    fclose(fp);
     driveDistance(dist, false); //Position is updated within this function
   }
 
@@ -173,7 +182,7 @@ void Drive::driveDistance(double inches, bool intaking) {
       driveValue = -driveValue;
 
     double dist = sonarLeft.distance(distanceUnits::in);
-    bool obstacleDetected = dist < (error - 6) && dist > 4;
+    bool obstacleDetected = false;//dist < (error - 6) && dist > 4;
     vex::controller::lcd().print("Dist --%f--\r", dist);
     vexDelay(20);
 
