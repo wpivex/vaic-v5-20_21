@@ -16,7 +16,7 @@ using namespace ai;
 /*
  * Updates the global Map obj declared in vex.h with data from the Jetson and vex link
  */
-void updateMapObj() {
+void updateMapObj(bool printBalls) {
   MAP_RECORD mapRecord; // Map from the Jetson
 
   jetson_comms.get_data(&mapRecord);
@@ -27,11 +27,28 @@ void updateMapObj() {
   int numBalls = mapRecord.mapnum;
   BallCoord balls[numBalls];
 
+  FILE *fp = fopen("/dev/serial2", "w");
   for (int i = 0; i < numBalls; i++) {
     float x = (mapRecord.mapobj[i].positionX / -25.4);
     float y = (mapRecord.mapobj[i].positionY / -25.4);
     balls[i] = {mapRecord.mapobj[i].age, mapRecord.mapobj[i].classID, x, y};
+    if(printBalls) {
+      switch(mapRecord.mapobj[i].classID) {
+        case 0:
+          fprintf(fp, "*   Red ");
+          break;
+        case 1:
+          fprintf(fp, "*  Blue ");
+          break;
+        default:
+          fprintf(fp, "* Not a ");
+          break;
+      }
+      fprintf(fp, "Ball: %f, %f\n\r", balls[i].x, balls[i].y );
+    }
   }
+  fflush(fp);
+  fclose(fp);
 
   map->setBallCoords(balls, numBalls);
 

@@ -103,9 +103,13 @@ void autonomousMain(void) {
 
 // Define strings for states for pprinting 
 const char *PSTATE[5] = {"Startup", "Searching", "Collecting", "Scoring", "Done"};
-void printState(FILE* stream, State s) {
-  fprintf(stream, "STATE: %s\tJetPkts: %d\n", PSTATE[s], jetson_comms.get_packets());
-  fflush(stream);
+void printStateChange(FILE* stream, State s) {
+  static State prev = STATE_DONE;
+  if(s != prev) {
+    prev = s;
+    fprintf(stream, "STATE: %s\tJetPkts: %ld\n", PSTATE[s], jetson_comms.get_packets());
+    fflush(stream);
+  }
 }
 
 int main() {
@@ -118,11 +122,15 @@ int main() {
   Competition.autonomous(autonomousMain); // Set up callbacks for autonomous and driver control periods.
 
   State robotState = STATE_STARTUP;
+  robotState = STATE_STARTUP;
 
   FILE *fp = fopen("/dev/serial2", "w");
 
   while(1) {
-    updateMapObj();
+    // if(controller::) {
+
+    // }
+    updateMapObj(robotState == STATE_SEARCHING);
 
     drive->setPose({ 
       map->getManagerCoords().x,
@@ -130,11 +138,11 @@ int main() {
       map->getManagerCoords().deg
     });
     // Print current state, then run transition
-    printState(fp, robotState);
+    printStateChange(fp, robotState);
     switch (robotState) {
       case STATE_STARTUP:
+        // State machine initialized and running, switch to search mode
         robotState = STATE_SEARCHING;
-
         break;
       case STATE_SEARCHING:
         //Find balls
@@ -145,8 +153,8 @@ int main() {
           robotState = STATE_COLLECTING;
 
         } else {
-          LeftDriveSmart.spin(directionType::rev, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
-          RightDriveSmart.spin(directionType::fwd, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
+          LeftDriveSmart.spin(directionType::rev, MIN_DRIVE_PERCENTAGE_TURN - 8, percentUnits::pct);
+          RightDriveSmart.spin(directionType::fwd, MIN_DRIVE_PERCENTAGE_TURN - 8, percentUnits::pct);
         }
         break;
       case STATE_COLLECTING:

@@ -154,7 +154,7 @@ void Drive::driveDistance(double inches, bool intaking) {
   for(int i = MIN_DRIVE_PERCENTAGE; i < MAX_DRIVE_PERCENTAGE; i++) {
     LeftDriveSmart.spin(directionType::fwd, i, percentUnits::pct);
     RightDriveSmart.spin(directionType::fwd, i, percentUnits::pct);
-    this_thread::sleep_for(10);
+    vexDelay(10);
   }
 
   //Multiply the proportional term by this
