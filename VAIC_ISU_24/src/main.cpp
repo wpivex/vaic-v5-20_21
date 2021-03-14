@@ -128,9 +128,6 @@ int main() {
   FILE *fp = fopen("/dev/serial2", "w");
 
   while(1) {
-    // if(controller::) {
-
-    // }
     updateMapObj(robotState == STATE_SEARCHING);
 
     drive->setPose({ 
@@ -145,7 +142,9 @@ int main() {
       case STATE_STARTUP:
         // State machine initialized and running
         while(!vex::controller(primary).ButtonUp.pressing()) {
-          c++; // lol
+          updateMapObj(false);
+
+          ++c; // lol
           if(c % 100 == 0) {
             fprintf(fp, "Awaiting start... \n");
             vex::controller::lcd().print("V5 Ready. Jet: %d", jetson_comms.get_packets());
@@ -162,11 +161,12 @@ int main() {
               map->getManagerCoords().y,
               map->getManagerCoords().deg
             });
-            drive->goTo({60.0, -60.0, 0.0}, false);
+            drive->goTo({36.0, -36.0, 0.0}, false);
           }
         }
+
         drive->driveDistance(-14, false);
-        drive->turnDegrees(-50);
+        drive->turnDegrees(-70);
         // Switch to search mode
         robotState = STATE_SEARCHING;
         break;
@@ -189,13 +189,15 @@ int main() {
         break;
       case STATE_SCORING:
         //Score in goal
-        goToNearestGoal();
-        drive->setPose({ 
-          map->getManagerCoords().x,
-          map->getManagerCoords().y,
-          map->getManagerCoords().deg
-        });
-        aimAndScore();
+        // goToNearestGoal();
+        // aimAndScore();
+
+        drive->turnDegrees(15);
+        leftIntake.spin(directionType::fwd, 100, percentUnits::pct);
+        rightIntake.spin(directionType::fwd, 100, percentUnits::pct);
+        scoreAllBalls();
+        leftIntake.stop();
+        rightIntake.stop();
         
         robotState = STATE_DONE;
         break;

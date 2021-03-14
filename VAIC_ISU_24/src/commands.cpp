@@ -27,6 +27,8 @@ float getDistanceToCoord(float x, float y) {
 // colorID should be 0 for red and 1 for blue, should never be 2 (for goals)
 void getNearestBall(int colorID) {
   // Find the box obj corresponding to the nearest ball, comparing by depth from the box objects
+  // TODO uncomment intake arms when working
+
   MAP_RECORD mapRecord;
   jetson_comms.get_data(&mapRecord);
   jetson_comms.request_map();
@@ -48,7 +50,7 @@ void getNearestBall(int colorID) {
   }
 
   if (minDistance != -1) {
-    drive->foldIntakes(false);
+    // drive->foldIntakes(false);
 
     // turn to ball
     drive->turnToBall(minDistance, colorID);
@@ -56,13 +58,20 @@ void getNearestBall(int colorID) {
     this_thread::sleep_for(200);
 
     // drive to ball
-    drive->driveDistance(minDistance - 3, true);
+    drive->driveDistance(minDistance + 3, true); // minDistance - 6
+
+    // temp code to intake longer while intake arms are not working
+    leftIntake.spin(directionType::fwd, 100, percentUnits::pct);
+    rightIntake.spin(directionType::fwd, 100, percentUnits::pct);
+    this_thread::sleep_for(1000);
+    leftIntake.stop();
+    rightIntake.stop();
 
     // pickup ball
-    drive->foldIntakes(true);
-    drive->driveDistance(9, true);
-    drive->foldIntakes(false);
-    drive->driveDistance(-14, true);
+    // drive->foldIntakes(true);
+    // drive->driveDistance(9, true);
+    // drive->foldIntakes(false);
+    // drive->driveDistance(-14, true);
   } else {
     FILE *fp = fopen("/dev/serial2", "w");
 
