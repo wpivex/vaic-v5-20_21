@@ -127,6 +127,8 @@ int main() {
 
   FILE *fp = fopen("/dev/serial2", "w");
 
+  bool firstRun = true;
+
   while(1) {
     updateMapObj(robotState == STATE_SEARCHING);
 
@@ -135,6 +137,7 @@ int main() {
       map->getManagerCoords().y,
       map->getManagerCoords().deg
     });
+
     // Print current state, then run transition
     printStateChange(fp, robotState);
     int c = 0;
@@ -145,9 +148,9 @@ int main() {
           updateMapObj(false);
 
           ++c; // lol
-          if(c % 100 == 0) {
-            fprintf(fp, "Awaiting start... \n");
-            vex::controller::lcd().print("V5 Ready. Jet: %d", jetson_comms.get_packets());
+          if(c % 1 == 0) {
+            fprintf(fp, "Awaiting start... %.2f %ld\n", map->getManagerCoords().deg, time(0));
+            vex::controller::lcd().print("V5 Ready. Map Rot: %.2f", map->getManagerCoords().deg);
           } else if (c % 50 == 0) {
             fprintf(fp, "Press up on controller\n");
             vex::controller::lcd().print("Press up to start");
@@ -161,38 +164,40 @@ int main() {
               map->getManagerCoords().y,
               map->getManagerCoords().deg
             });
-            drive->goTo({36.0, -36.0, 0.0}, false);
+            // drive->goTo({36.0, -36.0, 0.0}, false);
+            drive->turnDegreesGPS(180);
           }
         }
 
-        drive->driveDistance(-14, false);
+        drive->driveDistance(-30, false);
         drive->turnDegrees(-70);
         // Switch to search mode
         robotState = STATE_SEARCHING;
         break;
       case STATE_SEARCHING:
         //Find balls
-        if(map->hasBall(0)) //if balls of color red are present
+        if(map->hasBall(1)) // if balls of color blue are present
         {
           LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
           RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
           robotState = STATE_COLLECTING;
-
         } else {
-          LeftDriveSmart.spin(directionType::rev, MIN_DRIVE_PERCENTAGE_TURN - 8, percentUnits::pct);
-          RightDriveSmart.spin(directionType::fwd, MIN_DRIVE_PERCENTAGE_TURN - 8, percentUnits::pct);
+          LeftDriveSmart.spin(directionType::rev, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
+          RightDriveSmart.spin(directionType::fwd, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
         }
         break;
       case STATE_COLLECTING:
-        getNearestBall(0); // red ball
+        getNearestBall(1); // blue ball
         robotState = STATE_SCORING;
         break;
       case STATE_SCORING:
         //Score in goal
-        // goToNearestGoal();
-        // aimAndScore();
+        if (!firstRun) {
+          drive->driveDistance(-20, false);
+          goToNearestGoal();
+          aimAndScore();
+        }
 
-        drive->turnDegrees(15);
         leftIntake.spin(directionType::fwd, 100, percentUnits::pct);
         rightIntake.spin(directionType::fwd, 100, percentUnits::pct);
         scoreAllBalls();
@@ -201,7 +206,12 @@ int main() {
         
         robotState = STATE_DONE;
         break;
-      default:
+      case STATE_DONE:
+        drive->driveDistance(-24, false);
+        drive->turnDegrees(100);
+
+        firstRun = false;
+        robotState = STATE_SEARCHING;
         break;
     }
 

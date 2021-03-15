@@ -5,9 +5,12 @@
 
 const double MAX_DRIVE_PERCENTAGE = 25;
 const double MIN_DRIVE_PERCENTAGE = 2;
-const double MIN_DRIVE_PERCENTAGE_TURN = 10;
+const double MIN_DRIVE_PERCENTAGE_TURN = 15;
 const double Kpstraight = 3.5; //We probably want a seperate Kp value for turning but its good enough for now. What we really need is better encoder wheel mounting points
 const double Kpturn = 2.5;
+const double MAX_DRIVE_PERCENTAGE_TURN_GPS = 50;
+const double MIN_DRIVE_PERCENTAGE_TURN_GPS = 4;
+const double Kpturngps = 0.08;
 
 const int BALL_TURN_SETPOINT = 160; // # x pixels of the realsense camera / 2
 const int BALL_TURN_MAX_ERROR = 10;
@@ -28,6 +31,8 @@ class Drive {
     void turnToBall(float desiredDepth, int colorID);
 
     void turnDegrees(double angle);
+    void turnDegreesGPS(double angle);
+
     void driveDistance(double inches, bool intaking);
 
     void foldIntakes(bool foldout);

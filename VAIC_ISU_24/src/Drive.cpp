@@ -34,7 +34,9 @@ void Drive::goTo(Pose newPose, bool toFinalAngle) {
     while(turnErr < -180) {
       turnErr += 360;
     }
-    turnDegrees(turnErr); //Heading is updated within this function
+
+    turnDegreesGPS(turnErr);
+
     fprintf(fp, "turning to %f\n", turnErr);
     fflush(fp);
 
@@ -56,7 +58,7 @@ void Drive::goTo(Pose newPose, bool toFinalAngle) {
       turn2 += 360;
     }
 
-    turnDegrees(turn2); //Heading is updated within this function
+    turnDegreesGPS(turn2); //Heading is updated within this function
   }
 }
 
@@ -67,7 +69,8 @@ void Drive::turnToBall(float desiredDepth, int colorID) {
   MAP_RECORD mapRecord;
   int error, xPixel;
   int sumError = 0;
-  float minDiffDepth, output;
+  float minDiffDepth;
+  double output;
 
   int numCyclesAtTarget = 0;
 
@@ -95,8 +98,13 @@ void Drive::turnToBall(float desiredDepth, int colorID) {
 
     output = error * BALL_TURN_KP + sumError * BALL_TURN_KI;
 
-    LeftDriveSmart.spin(directionType::rev, output, percentUnits::pct);
-    RightDriveSmart.spin(directionType::fwd, output, percentUnits::pct);
+    double driveValue = std::max(std::min(MAX_DRIVE_PERCENTAGE_TURN_GPS, std::abs(output)), MIN_DRIVE_PERCENTAGE_TURN_GPS);
+    
+    if(output < 0)
+      driveValue = -driveValue;
+
+    LeftDriveSmart.spin(directionType::rev, driveValue, percentUnits::pct);
+    RightDriveSmart.spin(directionType::fwd, driveValue, percentUnits::pct);
 
     if (abs(error) < BALL_TURN_MAX_ERROR)
       numCyclesAtTarget++;
@@ -152,6 +160,42 @@ void Drive::turnDegrees(double angle) {
   myPose.theta = myPose.theta + angle;
 }
 
+void Drive::turnDegreesGPS(double angle) { 
+  int timeout = ((std::abs(angle) / 10) + 2) * 1000; // 2 seconds + angle * 1s / 10 deg
+  int maxTime = vex::timer::system() + timeout; // This is the maximum duration to try to turn before giving up
+
+  double target = angle + map->getManagerCoords().deg;
+
+  //Multiply the proportional term by this
+  double error;
+  do {
+    updateMapObj();
+
+    error =  target-map->getManagerCoords().deg;
+    while(error>180){
+      error-=360;
+    }
+    while(error<-180){
+      error+=360;
+    }
+    vex::controller::lcd().print("ERROR: %lf", error);
+
+    double driveValue = std::max(std::min(MAX_DRIVE_PERCENTAGE_TURN_GPS, std::abs(Kpturngps * error)), MIN_DRIVE_PERCENTAGE_TURN_GPS);
+    
+    if(error < 0)
+      driveValue = -driveValue;
+
+    LeftDriveSmart.spin(directionType::rev, driveValue, percentUnits::pct);
+    RightDriveSmart.spin(directionType::fwd, driveValue, percentUnits::pct);
+
+  } while((std::abs(error) > 1.5 || velocityLeft() > 2 || velocityRight() > 2) && vex::timer::system() < maxTime);
+
+  LeftDriveSmart.stop();
+  RightDriveSmart.stop();
+
+  myPose.theta = myPose.theta + angle;
+}
+
 void Drive::driveDistance(double inches, bool intaking) {
   int timeout = (std::abs(inches)/10+2)*1000; // 2 seconds + distance * 1s / 10 in
   int maxTime = vex::timer::system() + timeout; // This is the maximum duration to try to turn before giving up
@@ -163,7 +207,7 @@ void Drive::driveDistance(double inches, bool intaking) {
   for(int i = MIN_DRIVE_PERCENTAGE; i < MAX_DRIVE_PERCENTAGE; i++) {
     LeftDriveSmart.spin(directionType::fwd, i, percentUnits::pct);
     RightDriveSmart.spin(directionType::fwd, i, percentUnits::pct);
-    vexDelay(10);
+    this_thread::sleep_for(10);
   }
 
   //Multiply the proportional term by this
@@ -184,7 +228,7 @@ void Drive::driveDistance(double inches, bool intaking) {
     double dist = sonarLeft.distance(distanceUnits::in);
     bool obstacleDetected = false;//dist < (error - 6) && dist > 4;
     vex::controller::lcd().print("Dist --%f--\r", dist);
-    vexDelay(20);
+    this_thread::sleep_for(20);
 
     if(!obstacleDetected)
     {

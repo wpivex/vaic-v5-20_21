@@ -96,10 +96,13 @@ int Map::getNumBalls(void) {
   return numBalls;
 }
 
-bool Map::hasBall(int id){
-  for(int i = 0; i<MAX_BALLS;i++)
-  {
-    if(id==balls[i].colorID)
+bool Map::hasBall(int id) {
+  MAP_RECORD mapRecord; // Map from the Jetson
+  jetson_comms.get_data(&mapRecord);
+  jetson_comms.request_map();
+
+  for(int i = 0; i < mapRecord.boxnum; i++) {
+    if(id == mapRecord.boxobj[i].classID)
       return true;
   }
   return false;
