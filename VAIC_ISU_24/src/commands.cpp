@@ -27,6 +27,7 @@ float getDistanceToCoord(float x, float y) {
 // colorID should be 0 for red and 1 for blue, should never be 2 (for goals)
 void getNearestBall(int colorID) {
   // Find the box obj corresponding to the nearest ball, comparing by depth from the box objects
+
   MAP_RECORD mapRecord;
   jetson_comms.get_data(&mapRecord);
   jetson_comms.request_map();
@@ -56,12 +57,18 @@ void getNearestBall(int colorID) {
     this_thread::sleep_for(200);
 
     // drive to ball
-    drive->driveDistance(minDistance - 3, true);
+    drive->driveDistance(minDistance + 5, true); // minDistance - 6
+
+    // temp code to intake longer while intake arms are not working
+    leftIntake.spin(directionType::fwd, 100, percentUnits::pct);
+    rightIntake.spin(directionType::fwd, 100, percentUnits::pct);
+    this_thread::sleep_for(1000);
+    leftIntake.stop();
+    rightIntake.stop();
 
     // pickup ball
-    drive->foldIntakes(true);
-    drive->driveDistance(9, true);
-    drive->foldIntakes(false);
+    // drive->foldIntakes(true);
+    // drive->driveDistance(5, true);
   } else {
     FILE *fp = fopen("/dev/serial2", "w");
 
@@ -80,6 +87,9 @@ void getNearestBall(int colorID) {
 void goToNearestGoal() {
   // TODO account for obstructions
   // TODO determine angle based on desired goal and starting location
+  FILE *fp = fopen("/dev/serial2", "w");
+  fprintf(fp, "Go to nearest goal\n");
+  fflush(fp);
   float minX, minY, angle, minDistance = -1;
 
   for (int xGoal = 0; xGoal < 3; xGoal++) { // lower numbers are to the left
@@ -98,24 +108,28 @@ void goToNearestGoal() {
 
   // TODO fix angle and position for middle goal, at 0,0
   // angle = (atan2(minY, minX) * 180 / 3.14);
-
+  fprintf(fp, "Calc goal pose\n");
+  fflush(fp);
   // hard code for the only goal we have setup rn, in the middle right.
-  minX = (2 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 2) * (GOAL_DIAMETER + 10);
-  minY = (1 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 1) * (GOAL_DIAMETER + 10);
-
-  angle = 0;
-
+  // minX = (2 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 2) * (GOAL_DIAMETER + 10);
+  // minY = (1 - 1) * (FIELD_LENGTH_IN / 2) + (1 - 1) * (GOAL_DIAMETER + 10);
+  
+  // hardcode for corner goal probably
+  minX = 65;
+  minY = -65;
+  angle = 270;
+  fclose(fp);
   drive->goTo({
     minX,
     minY,
     angle
-  },false);
+  },true);
 }
 
 void scoreAllBalls() {
   leftIntake.spin(directionType::fwd, 100, percentUnits::pct);
   rightIntake.spin(directionType::fwd, 100, percentUnits::pct);
-  rollerBack.spin(directionType::fwd, 100, percentUnits::pct);
+  rollerBack.spin(directionType::fwd, 60, percentUnits::pct);
   yeet.spin(directionType::fwd, 100, percentUnits::pct);
   //Wait 2 seconds for now
   this_thread::sleep_for(2000);

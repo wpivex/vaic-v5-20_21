@@ -101,6 +101,18 @@ void autonomousMain(void) {
   firstAutoFlag = false;
 }
 
+// Define strings for states for pprinting 
+const char *PSTATE[5] = {"Startup", "Searching", "Collecting", "Scoring", "Done"};
+void printStateChange(FILE* stream, State s) {
+  static State prev = STATE_DONE;
+  if(s != prev) {
+    prev = s;
+    fprintf(stream, "STATE: %s\tJetPkts: %ld\n", PSTATE[s], jetson_comms.get_packets());
+    vex::controller::lcd().print("S: %s J: %ld", PSTATE[s], jetson_comms.get_packets());
+    fflush(stream);
+  }
+}
+
 int main() {
   vexcodeInit(); // Initializing Robot Configuration. DO NOT REMOVE!
 
@@ -110,12 +122,15 @@ int main() {
 
   Competition.autonomous(autonomousMain); // Set up callbacks for autonomous and driver control periods.
 
-  State robotState = startup;
+  State robotState = STATE_STARTUP;
+  robotState = STATE_STARTUP;
 
   FILE *fp = fopen("/dev/serial2", "w");
 
+  bool firstRun = true;
+
   while(1) {
-    updateMapObj();
+    updateMapObj(robotState == STATE_SEARCHING);
 
     drive->setPose({ 
       map->getManagerCoords().x,
@@ -123,47 +138,80 @@ int main() {
       map->getManagerCoords().deg
     });
 
+    // Print current state, then run transition
+    printStateChange(fp, robotState);
+    int c = 0;
     switch (robotState) {
-      case startup:
-        robotState = lookForBalls;
+      case STATE_STARTUP:
+        // State machine initialized and running
+        while(!vex::controller(primary).ButtonUp.pressing()) {
+          updateMapObj(false);
 
-        fprintf(fp, "%d\n", robotState);
-        fflush(fp);
+          ++c; // lol
+          if(c % 1 == 0) {
+            fprintf(fp, "Awaiting start... %.2f %ld\n", map->getManagerCoords().deg, time(0));
+            vex::controller::lcd().print("V5 Ready. Map Rot: %.2f", map->getManagerCoords().deg);
+          } else if (c % 50 == 0) {
+            fprintf(fp, "Press up on controller\n");
+            vex::controller::lcd().print("Press up to start");
+          }
+          fflush(fp);
+          this_thread::sleep_for(10);
 
+          if(vex::controller(primary).ButtonLeft.pressing()) {
+            drive->setPose({ 
+              map->getManagerCoords().x,
+              map->getManagerCoords().y,
+              map->getManagerCoords().deg
+            });
+            // drive->goTo({36.0, -36.0, 0.0}, false);
+            drive->turnDegreesGPS(180);
+          }
+        }
+
+        drive->driveDistance(-30, false);
+        drive->turnDegrees(-70);
+        // Switch to search mode
+        robotState = STATE_SEARCHING;
         break;
-      case lookForBalls:
+      case STATE_SEARCHING:
         //Find balls
-        if(map->hasBall(0)) //if balls of color red are present
+        if(map->hasBall(1)) // if balls of color blue are present
         {
           LeftDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
           RightDriveSmart.spin(directionType::fwd, 0, percentUnits::pct);
-          robotState = collectingBalls;
-
-          fprintf(fp, "%d\n", robotState);
-          fflush(fp);
+          robotState = STATE_COLLECTING;
         } else {
           LeftDriveSmart.spin(directionType::rev, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
           RightDriveSmart.spin(directionType::fwd, MIN_DRIVE_PERCENTAGE_TURN - 5, percentUnits::pct);
         }
         break;
-      case collectingBalls:
-        getNearestBall(0); // red ball
-        robotState = scoreBalls;
-
-        fprintf(fp, "%d\n", robotState);
-        fflush(fp);
-
+      case STATE_COLLECTING:
+        getNearestBall(1); // blue ball
+        robotState = STATE_SCORING;
         break;
-      case scoreBalls:
+      case STATE_SCORING:
         //Score in goal
-        goToNearestGoal();
-        
-        aimAndScore();
-        
-        robotState = done;
+        if (!firstRun) {
+          drive->driveDistance(-20, false);
+          goToNearestGoal();
+          aimAndScore();
+        }
 
-        fprintf(fp, "%d\n", robotState);
-        fflush(fp);
+        leftIntake.spin(directionType::fwd, 100, percentUnits::pct);
+        rightIntake.spin(directionType::fwd, 100, percentUnits::pct);
+        scoreAllBalls();
+        leftIntake.stop();
+        rightIntake.stop();
+        
+        robotState = STATE_DONE;
+        break;
+      case STATE_DONE:
+        drive->driveDistance(-24, false);
+        drive->turnDegrees(100);
+
+        firstRun = false;
+        robotState = STATE_SEARCHING;
         break;
     }
 

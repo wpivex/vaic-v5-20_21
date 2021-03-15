@@ -29,7 +29,7 @@ typedef struct {
   int size; // width in in, 15 or 24 (or -1 if unknown for enemy bots)
 } RobotCoord;
 
-void updateMapObj(void);
+void updateMapObj(bool printBalls = false);
 
 class Map {
   public:
